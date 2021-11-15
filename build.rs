@@ -54,7 +54,7 @@ fn main() {
         }
         config.include(format!("{}{}", path, entry.3));
     } else {
-        panic!("Unable to download mdk-sdk. Please download from https://sourceforge.net/projects/mdk-sdk/ and extract to {}", env::var("OUT_DIR").unwrap());
+        panic!("Unable to download or extract mdk-sdk. Please make sure you have 7z in PATH or download mdk manually from https://sourceforge.net/projects/mdk-sdk/ and extract to {}", env::var("OUT_DIR").unwrap());
     }
 
     config
