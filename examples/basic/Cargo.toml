@@ -1,0 +1,8 @@
+[package]
+name = "basic"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+qmetaobject = { version = "*", git = "https://github.com/woboq/qmetaobject-rs.git", default-features = false, features = ["log"] }
+qml-video-rs = { path = "../../" }
