@@ -74,9 +74,9 @@ fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error
     let out_dir = env::var("OUT_DIR").unwrap();
     if !Path::new(&format!("{}/mdk-sdk/{}", out_dir, check)).exists() {
         {
-            let mut res = reqwest::blocking::get(url).map_err(|_| std::io::ErrorKind::Other)?;
+            let mut reader = ureq::get(url).call().map_err(|_| std::io::ErrorKind::Other)?.into_reader();
             let mut file = File::create(format!("{}/mdk-sdk.7z", out_dir))?;
-            res.copy_to(&mut file).map_err(|_| std::io::ErrorKind::Other)?;
+            std::io::copy(&mut reader, &mut file)?;
         }
         Command::new("7z").current_dir(&out_dir).args(&["x", "-y", "mdk-sdk.7z"]).status()?;
         std::fs::remove_file(format!("{}/mdk-sdk.7z", out_dir))?;

@@ -166,6 +166,9 @@ public:
 
                 if (!md.video.empty()) {
                     auto v = md.video[0];
+                    if (!v.frames && v.duration > 0 && v.codec.frame_rate > 0) {
+                        v.frames = (double(v.duration) / 1000.0) * v.codec.frame_rate;
+                    }
                     QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, v.duration), Q_ARG(qlonglong, v.frames), Q_ARG(double, v.codec.frame_rate), Q_ARG(uint, v.codec.width), Q_ARG(uint, v.codec.height));
                 }
                 m_player->setLoop(9999999);
