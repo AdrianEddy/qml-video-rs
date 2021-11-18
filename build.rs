@@ -42,11 +42,16 @@ fn main() {
     let entry = sdk[target_os.as_str()];
 
     if let Ok(path) = download_and_extract(&entry.0, &format!("{}{}", entry.1, entry.2)) {
-        println!("cargo:rustc-link-search={}{}", path, entry.1);
-        println!("cargo:rustc-link-lib=mdk");
         if target_os == "macos" || target_os == "ios" {
             println!("cargo:rustc-link-search=framework={}{}", path, "lib/");
             println!("cargo:rustc-link-lib=framework=mdk");
+            println!("cargo:rustc-link-arg=-Wl,-rpath,@loader_path");
+            config.flag_if_supported("-fobjc-arc");
+            config.flag("-x").flag("objective-c++");
+            copy_dir_all(format!("{}/mdk.framework", path), format!("{}/../../../", env::var("OUT_DIR").unwrap())).unwrap();
+        } else {
+            println!("cargo:rustc-link-search={}{}", path, entry.1);
+            println!("cargo:rustc-link-lib=mdk");
         }
         if target_os == "windows" {
             std::fs::copy(format!("{}/bin/x64/mdk.dll", path), format!("{}/../../../mdk.dll", env::var("OUT_DIR").unwrap())).unwrap();
@@ -73,14 +78,34 @@ fn main() {
 fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error> {
     let out_dir = env::var("OUT_DIR").unwrap();
     if !Path::new(&format!("{}/mdk-sdk/{}", out_dir, check)).exists() {
+        let ext = if url.contains(".tar.xz") { ".tar.xz" } else { ".7z" };
         {
             let mut reader = ureq::get(url).call().map_err(|_| std::io::ErrorKind::Other)?.into_reader();
-            let mut file = File::create(format!("{}/mdk-sdk.7z", out_dir))?;
+            let mut file = File::create(format!("{}/mdk-sdk{}", out_dir, ext))?;
             std::io::copy(&mut reader, &mut file)?;
         }
-        Command::new("7z").current_dir(&out_dir).args(&["x", "-y", "mdk-sdk.7z"]).status()?;
-        std::fs::remove_file(format!("{}/mdk-sdk.7z", out_dir))?;
+        Command::new("7z").current_dir(&out_dir).args(&["x", "-y", &format!("mdk-sdk{}", ext)]).status()?;
+        std::fs::remove_file(format!("{}/mdk-sdk{}", out_dir, ext))?;
+        if ext == ".tar.xz" {
+            Command::new("7z").current_dir(&out_dir).args(&["x", "-y", "mdk-sdk.tar"]).status()?;
+            std::fs::remove_file(format!("{}/mdk-sdk.tar", out_dir))?;
+        }
     }
 
     Ok(format!("{}/mdk-sdk/", out_dir))
+}
+
+use std::{io, fs};
+fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
+    fs::create_dir_all(&dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        } else {
+            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
 }

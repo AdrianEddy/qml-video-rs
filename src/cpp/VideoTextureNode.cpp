@@ -7,6 +7,10 @@
 #if (_WIN32+0)
 #include <d3d11.h>
 #endif
+#if (__APPLE__+0)
+#include <private/qsgtexture_p.h>
+#include <Metal/Metal.h>
+#endif
 #include "mdk/Player.h"
 #include "mdk/RenderAPI.h"
 using namespace std;
