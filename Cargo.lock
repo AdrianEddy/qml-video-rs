@@ -201,7 +201,7 @@ dependencies = [
 [[package]]
 name = "qmetaobject"
 version = "0.2.4"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#2d239bdd71b793b59662f252663413dd8a2170e5"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#d572c48a9a42d125d2c42fc6088c14cbaa0be0db"
 dependencies = [
  "cpp",
  "cpp_build",
@@ -215,7 +215,7 @@ dependencies = [
 [[package]]
 name = "qmetaobject_impl"
 version = "0.2.4"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#2d239bdd71b793b59662f252663413dd8a2170e5"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#d572c48a9a42d125d2c42fc6088c14cbaa0be0db"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -237,7 +237,7 @@ dependencies = [
 [[package]]
 name = "qttypes"
 version = "0.2.4"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#2d239bdd71b793b59662f252663413dd8a2170e5"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#d572c48a9a42d125d2c42fc6088c14cbaa0be0db"
 dependencies = [
  "cpp",
  "cpp_build",

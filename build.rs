@@ -45,10 +45,9 @@ fn main() {
         if target_os == "macos" || target_os == "ios" {
             println!("cargo:rustc-link-search=framework={}{}", path, "lib/");
             println!("cargo:rustc-link-lib=framework=mdk");
-            println!("cargo:rustc-link-arg=-Wl,-rpath,@loader_path");
             config.flag_if_supported("-fobjc-arc");
             config.flag("-x").flag("objective-c++");
-            copy_dir_all(format!("{}/mdk.framework", path), format!("{}/../../../", env::var("OUT_DIR").unwrap())).unwrap();
+            Command::new("cp").args(&["-r", &format!("{}/lib/mdk.framework", path), &format!("{}/../../../", env::var("OUT_DIR").unwrap())]).status().unwrap();
         } else {
             println!("cargo:rustc-link-search={}{}", path, entry.1);
             println!("cargo:rustc-link-lib=mdk");
@@ -93,19 +92,4 @@ fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error
     }
 
     Ok(format!("{}/mdk-sdk/", out_dir))
-}
-
-use std::{io, fs};
-fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
-    fs::create_dir_all(&dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        if ty.is_dir() {
-            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        } else {
-            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        }
-    }
-    Ok(())
 }
