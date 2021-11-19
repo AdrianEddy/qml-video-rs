@@ -144,7 +144,12 @@ public:
         const QImage::Format imageFormat = QImage::Format_RGBA8888_Premultiplied;
 
         const uchar *p = reinterpret_cast<const uchar *>(m_readbackResult->data.constData());
-        return QImage(p, m_readbackResult->pixelSize.width(), m_readbackResult->pixelSize.height(), imageFormat);
+        QImage ret(p, m_readbackResult->pixelSize.width(), m_readbackResult->pixelSize.height(), imageFormat);
+
+        if (m_window->rendererInterface()->graphicsApi() == QSGRendererInterface::OpenGLRhi)
+            ret.mirror();
+        
+        return ret;
     }
 
     // Upload QImage to texture. This copies data from CPU to GPU
@@ -152,6 +157,9 @@ public:
         if (!m_item || !m_texture || !m_item->window()) return false;
         auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
         auto rhi = context->rhi();
+
+        if (m_window->rendererInterface()->graphicsApi() == QSGRendererInterface::OpenGLRhi)
+            const_cast<QImage&>(img).mirror();
 
         QRhiCommandBuffer *cb = context->currentFrameCommandBuffer();
         QRhiResourceUpdateBatch *resourceUpdates = rhi->nextResourceUpdateBatch();
