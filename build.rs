@@ -34,7 +34,7 @@ fn main() {
         ("windows",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-windows-desktop-vs2019.7z?viasf=1", "lib/x64/",                      "mdk.lib",    "include/")),
         // TODO: linux
         ("macos",    ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-macOS-x86_64.tar.xz?viasf=1",       "lib/mdk.framework/Versions/A/", "mdk",        "include/")),
-        ("android",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-android.tar.xz?viasf=1",            "lib/arm64-v8a/",                "libmdk.so",  "include/")),
+        ("android",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-android.7z?viasf=1",                "lib/arm64-v8a/",                "libmdk.so",  "include/")),
         ("ios",      ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-iOS.tar.xz?viasf=1",                "lib/mdk.framework/",            "mdk",        "include/")),
     ].into_iter().collect();
 
@@ -55,6 +55,9 @@ fn main() {
         if target_os == "windows" {
             std::fs::copy(format!("{}/bin/x64/mdk.dll", path), format!("{}/../../../mdk.dll", env::var("OUT_DIR").unwrap())).unwrap();
             std::fs::copy(format!("{}/bin/x64/ffmpeg-5.dll", path), format!("{}/../../../ffmpeg-5.dll", env::var("OUT_DIR").unwrap())).unwrap();
+        }
+        if target_os == "android" {
+            std::fs::copy(format!("{}/lib/arm64-v8a/libffmpeg.so", path), format!("{}/../../../libffmpeg.so", env::var("OUT_DIR").unwrap())).unwrap();
         }
         config.include(format!("{}{}", path, entry.3));
     } else {

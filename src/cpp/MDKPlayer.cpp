@@ -217,10 +217,13 @@ public:
         QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, timestamp * 1000.0));
     }
 
-    void sync(const QSize &newSize, bool force = false) {
+    void sync(QSize newSize, bool force = false) {
         if (!m_player) { m_size = newSize; return; }
         if (!force && m_node->texture() && newSize == m_size)
             return;
+
+        if (newSize.width() < 32 || newSize.height() < 32)
+            newSize = QSize(32, 32);
 
         m_size = newSize;
         releaseResources();
