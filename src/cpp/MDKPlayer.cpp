@@ -54,8 +54,9 @@ public:
 
         if (m_item && m_node && m_window) {
             setupPlayer();
-            if (m_size.width() > 0 && m_size.height() > 0)
-                sync(m_size, true);
+            if (m_size.width() > 0 && m_size.height() > 0) {
+                m_syncNext = true;
+            }
         }
     }
     void destroyPlayer() {
@@ -169,6 +170,7 @@ public:
                     if (!v.frames && v.duration > 0 && v.codec.frame_rate > 0) {
                         v.frames = (double(v.duration) / 1000.0) * v.codec.frame_rate;
                     }
+                    m_fps = v.codec.frame_rate;
                     QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, v.duration), Q_ARG(qlonglong, v.frames), Q_ARG(double, v.codec.frame_rate), Q_ARG(uint, v.codec.width), Q_ARG(uint, v.codec.height));
                 }
                 m_player->setLoop(9999999);
@@ -177,7 +179,7 @@ public:
                 if (!m_connectionBeforeRendering) 
                     m_connectionBeforeRendering = QObject::connect(m_window, &QQuickWindow::beforeRendering, [this] { this->windowBeforeRendering(); });
                 if (!m_connectionScreenChanged) 
-                    m_connectionScreenChanged = QObject::connect(m_window, &QQuickWindow::screenChanged, [this] { m_item->update(); });
+                    m_connectionScreenChanged = QObject::connect(m_window, &QQuickWindow::screenChanged, [this](QScreen *) { m_item->update(); });
             }
 
             return true;
@@ -199,12 +201,7 @@ public:
             auto img = toImage();
             if (!m_videoLoaded || !m_player) return;
 
-            int frame = 0;
-            auto md = m_player->mediaInfo();
-            if (!md.video.empty()) {
-                auto v = md.video[0];
-                frame = std::ceil(timestamp * v.codec.frame_rate);
-            }
+            int frame = std::ceil(timestamp * m_fps);
 
             const auto ptr = m_processPixels(m_item, frame, img.width(), img.height(), img.scanLine(0), img.sizeInBytes());
             if (ptr != img.scanLine(0)) {
@@ -218,6 +215,10 @@ public:
     }
 
     void sync(QSize newSize, bool force = false) {
+        if (m_syncNext) {
+            force = true;
+            m_syncNext = false;
+        }
         if (!m_player) { m_size = newSize; return; }
         if (!force && m_node->texture() && newSize == m_size)
             return;
@@ -420,7 +421,9 @@ private:
     std::atomic<bool> m_videoLoaded{false};
     std::atomic<bool> m_firstFrameLoaded{false};
 
+    double m_fps{0.0};
     float m_playbackRate{1.0};
+    bool m_syncNext{false};
 
     QSGImageNode *m_node{nullptr};
     QColor m_bgColor;
