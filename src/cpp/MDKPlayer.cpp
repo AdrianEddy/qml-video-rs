@@ -39,9 +39,9 @@ public:
         "AMediaCodec:java=1:copy=0:surface=1:async=0",
 #elif (_WIN32+0)
         "MFT:d3d=11",
-        "CUDA",
-        "NVDEC",
-        "CUVID",
+        //"CUDA",
+        //"NVDEC",
+        //"CUVID",
         "D3D11",
         "DXVA",
 #elif (__linux__+0)
