@@ -58,6 +58,17 @@ impl MDKPlayer {
         })
     }
     
+    pub fn set_rotation(&self, v: i32) {
+        cpp!(unsafe [self as "MDKPlayer *", v as "int"] {
+            return self->setRotation(v);
+        })
+    }
+    pub fn get_rotation(&self) -> i32 {
+        cpp!(unsafe [self as "MDKPlayer *"] -> i32 as "int" {
+            return self->getRotation();
+        })
+    }
+
     pub fn get_muted(&self) -> bool {
         cpp!(unsafe [self as "MDKPlayer *"] -> bool as "bool" {
             return self->getMuted();

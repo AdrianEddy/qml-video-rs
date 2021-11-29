@@ -282,6 +282,21 @@ public:
         if (m_player) m_player->setRange(from_ms, to_ms);
     }
 
+    void setRotation(int v) {
+        if (!m_videoLoaded || !m_player) return;
+
+        m_player->rotate(v);
+    }
+    int getRotation() {
+        if (!m_videoLoaded || !m_player) return 0;
+        
+        auto md = m_player->mediaInfo();
+        if (!md.video.empty()) {
+            return md.video[0].rotation;
+        }
+        return 0;
+    }
+
     std::map<std::string, std::string> getMediaInfo(const MediaInfo &mi) {
         std::map<std::string, std::string> ret;
         ret["start_time"] = std::to_string(mi.start_time);

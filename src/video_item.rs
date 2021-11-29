@@ -23,6 +23,7 @@ pub struct MDKVideoItem {
     pub playingChanged: qt_signal!(),
 
     pub backgroundColor: qt_property!(QColor; WRITE setBackgroundColor READ getBackgroundColor),
+    pub rotation: qt_property!(i32; WRITE setRotation READ getRotation),
     pub playbackRate: qt_property!(f32; WRITE setPlaybackRate READ getPlaybackRate),
 
     pub currentFrame:        qt_property!(i64; WRITE setCurrentFrame NOTIFY currentFrameChanged),
@@ -79,13 +80,16 @@ impl MDKVideoItem {
     pub fn stop (&mut self) { self.m_player.stop(); self.playing = false; self.playingChanged(); }
 
     pub fn setBackgroundColor(&mut self, color: QColor) { self.m_player.set_background_color(color); }
-    pub fn getBackgroundColor(&self) -> QColor { return self.m_player.get_background_color(); }
+    pub fn getBackgroundColor(&self) -> QColor { self.m_player.get_background_color() }
 
     pub fn setPlaybackRate(&mut self, rate: f32) { self.m_player.set_playback_rate(rate); }
-    pub fn getPlaybackRate(&self) -> f32 { return self.m_player.get_playback_rate(); }
+    pub fn getPlaybackRate(&self) -> f32 { self.m_player.get_playback_rate() }
 
     pub fn setCurrentFrame(&mut self, frame: i64)  { self.m_player.seek_to_frame(frame, self.currentFrame); }
     pub fn setTimestamp(&mut self, timestamp: f64) { self.m_player.seek_to_timestamp(timestamp); }
+
+    pub fn setRotation(&self, v: i32) { self.m_player.set_rotation(v); }
+    pub fn getRotation(&self) -> i32 { self.m_player.get_rotation() }
 
     pub fn setUrl(&mut self, url: QUrl) {
         let prev_muted = self.getMuted();
