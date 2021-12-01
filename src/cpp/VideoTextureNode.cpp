@@ -163,7 +163,7 @@ public:
 
         QRhiCommandBuffer *cb = context->currentFrameCommandBuffer();
         QRhiResourceUpdateBatch *resourceUpdates = rhi->nextResourceUpdateBatch();
-        resourceUpdates->uploadTexture(m_texture, img);
+        resourceUpdates->uploadTexture(m_texture, img.scaled(m_texture->pixelSize())); // TODO: use second texture instead of .scaled()
 
         cb->resourceUpdate(resourceUpdates);
 

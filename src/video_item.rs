@@ -6,7 +6,7 @@ use qmetaobject::scenegraph::*;
 use qmetaobject::*;
 use crate::video_player::*;
 
-type ProcessPixelsCb = Box<dyn Fn(u32, u32, u32, &mut [u8]) -> *mut u8>;
+type ProcessPixelsCb = Box<dyn Fn(u32, u32, u32, u32, &mut [u8]) -> (u32, u32, u32, *mut u8)>;
 type ResizeCb = Box<dyn Fn(u32, u32)>;
 
 pub enum QSGImageNode {}
@@ -128,11 +128,11 @@ impl MDKVideoItem {
         }
     }
 
-    fn process_pixels(&mut self, frame: u32, width: u32, height: u32, pixels: &mut [u8]) -> *mut u8 {
+    fn process_pixels(&mut self, frame: u32, width: u32, height: u32, stride: u32, pixels: &mut [u8]) -> (u32, u32, u32, *mut u8) {
         if let Some(ref mut proc) = self.m_processPixelsCb {
-            proc(frame, width, height, pixels)
+            proc(frame, width, height, stride, pixels)
         } else {
-            pixels.as_mut_ptr()
+            (width, height, stride, pixels.as_mut_ptr())
         }
     }
 
@@ -151,15 +151,27 @@ impl MDKVideoItem {
     }
 }
 
+fn qimage_from_parts(parts: (u32, u32, u32, *mut u8)) -> QImage {
+    let (w, h, s, ptr) = parts;
+    cpp!(unsafe [w as "uint32_t", h as "uint32_t", s as "uint32_t", ptr as "const uint8_t *"] -> QImage as "QImage" {
+        return QImage(ptr, w, h, s, QImage::Format_RGBA8888_Premultiplied);
+    })
+}
+
 cpp! {{
-    uint8_t *processPixelsCb(QQuickItem *item, uint32_t frame, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize) {
-        return rust!(Rust_MDKPlayerItem_processPixels [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", width: u32 as "uint32_t", height: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] -> *mut u8 as "uint8_t *" {
+    QImage processPixelsCb(QQuickItem *item, uint32_t frame, const QImage &img) {
+        uint32_t width = img.width();
+        uint32_t height = img.height();
+        uint32_t stride = img.bytesPerLine();
+        const uint8_t *bits = img.constBits();
+        uint64_t bitsSize = img.sizeInBytes();
+        return rust!(Rust_MDKPlayerItem_processPixels [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", width: u32 as "uint32_t", stride: u32 as "uint32_t", height: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] -> QImage as "QImage" {
             let slice = unsafe { std::slice::from_raw_parts_mut(bits, bitsSize as usize) };
             
             let mut vid_item = MDKVideoItem::get_from_cpp(item);
             let mut vid_item = unsafe { &mut *vid_item.as_ptr() }; // vid_item.borrow_mut()
-
-            vid_item.process_pixels(frame, width, height, slice)
+            
+            qimage_from_parts(vid_item.process_pixels(frame, width, height, stride, slice))
         });
     };
 }}

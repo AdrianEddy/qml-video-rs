@@ -16,7 +16,7 @@
 #include "mdk/Player.h"
 #include "mdk/VideoFrame.h"
 
-typedef std::function<uint8_t*(QQuickItem *item, uint32_t frame, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize)> ProcessPixelsCb;
+typedef std::function<QImage(QQuickItem *item, uint32_t frame, const QImage &img)> ProcessPixelsCb;
 typedef std::function<void(int32_t frame, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize)> VideoProcessCb;
 
 void printMd(const std::map<std::string, std::string> &md) {
@@ -203,11 +203,9 @@ public:
 
             int frame = std::ceil(timestamp * m_fps);
 
-            const auto ptr = m_processPixels(m_item, frame, img.width(), img.height(), img.scanLine(0), img.sizeInBytes());
-            if (ptr != img.scanLine(0)) {
-                fromImage(QImage(ptr, img.width(), img.height(), img.format()));
-            } else {
-                fromImage(img);
+            const auto img2 = m_processPixels(m_item, frame, img);
+            if (!img2.isNull()) {
+                fromImage(img2);
             }
         }
 
