@@ -165,12 +165,12 @@ cpp! {{
         uint32_t stride = img.bytesPerLine();
         const uint8_t *bits = img.constBits();
         uint64_t bitsSize = img.sizeInBytes();
-        return rust!(Rust_MDKPlayerItem_processPixels [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", width: u32 as "uint32_t", stride: u32 as "uint32_t", height: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] -> QImage as "QImage" {
+        return rust!(Rust_MDKPlayerItem_processPixels [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", width: u32 as "uint32_t", height: u32 as "uint32_t", stride: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] -> QImage as "QImage" {
             let slice = unsafe { std::slice::from_raw_parts_mut(bits, bitsSize as usize) };
             
             let mut vid_item = MDKVideoItem::get_from_cpp(item);
             let mut vid_item = unsafe { &mut *vid_item.as_ptr() }; // vid_item.borrow_mut()
-            
+
             qimage_from_parts(vid_item.process_pixels(frame, width, height, stride, slice))
         });
     };

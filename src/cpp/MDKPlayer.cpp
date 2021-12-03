@@ -201,10 +201,10 @@ public:
             auto img = toImage();
             if (!m_videoLoaded || !m_player) return;
 
-            int frame = std::ceil(timestamp * m_fps);
+            int frame = std::ceil(timestamp * m_fps); 
 
             const auto img2 = m_processPixels(m_item, frame, img);
-            if (!img2.isNull()) {
+            if (!img2.isNull() && img2.constBits()) {
                 fromImage(img2);
             }
         }
