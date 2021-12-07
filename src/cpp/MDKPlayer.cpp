@@ -142,6 +142,15 @@ public:
         m_player->setBackgroundColor(m_bgColor.redF(), m_bgColor.greenF(), m_bgColor.blueF(), m_bgColor.alphaF());
         m_player->setPlaybackRate(m_playbackRate);
 
+        m_player->onStateChanged([this](mdk::State state) {
+            qDebug() << "onStateChanged" <<
+                QString(state == mdk::State::NotRunning?  "NotRunning"  : "") +       
+                QString(state == mdk::State::Running?     "Running"     : "") +       
+                QString(state == mdk::State::Paused?      "Paused"      : "");
+            
+            QMetaObject::invokeMethod(m_item, "stateChanged", Q_ARG(int, int(state)));
+        });
+        
         m_player->onMediaStatusChanged([this](mdk::MediaStatus status) -> bool {
             
             qDebug() << "onMediaStatusChanged" <<
@@ -180,6 +189,10 @@ public:
                     m_connectionBeforeRendering = QObject::connect(m_window, &QQuickWindow::beforeRendering, [this] { this->windowBeforeRendering(); });
                 if (!m_connectionScreenChanged) 
                     m_connectionScreenChanged = QObject::connect(m_window, &QQuickWindow::screenChanged, [this](QScreen *) { m_item->update(); });
+            }
+            if (status & mdk::MediaStatus::Invalid) {
+                QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, 0), Q_ARG(qlonglong, 0), Q_ARG(double, 0), Q_ARG(uint, 0), Q_ARG(uint, 0));
+                QMetaObject::invokeMethod(m_item, "metadataLoaded", Q_ARG(QJsonObject, QJsonObject()));
             }
 
             return true;

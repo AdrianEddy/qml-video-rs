@@ -55,6 +55,7 @@ pub struct MDKVideoItem {
 
     pub frameRendered: qt_method!(fn(&mut self, timestamp: f64)),
     pub videoLoaded:   qt_method!(fn(&mut self, duration: f64, frameCount: i64, frameRate: f64, width: u32, height: u32)),
+    pub stateChanged:  qt_method!(fn(&mut self, state: i32)),
     
     pub surfaceSizeUpdated: qt_method!(fn(&mut self, width: u32, height: u32)),
     pub setPlaybackRange: qt_method!(fn(&mut self, from_ms: i64, to_ms: i64)),
@@ -75,9 +76,9 @@ impl MDKVideoItem {
         self.m_resizeCb = Some(cb);
     }
 
-    pub fn play (&mut self) { self.m_player.play(); self.playing = true; self.playingChanged(); }
-    pub fn pause(&mut self) { self.m_player.pause(); self.playing = false; self.playingChanged(); }
-    pub fn stop (&mut self) { self.m_player.stop(); self.playing = false; self.playingChanged(); }
+    pub fn play (&mut self) { self.m_player.play(); }
+    pub fn pause(&mut self) { self.m_player.pause(); }
+    pub fn stop (&mut self) { self.m_player.stop(); }
 
     pub fn setBackgroundColor(&mut self, color: QColor) { self.m_player.set_background_color(color); }
     pub fn getBackgroundColor(&self) -> QColor { self.m_player.get_background_color() }
@@ -119,6 +120,10 @@ impl MDKVideoItem {
         self.videoHeight  = height;
         
         self.metadataChanged();
+    }
+    fn stateChanged(&mut self, state: i32) {
+        self.playing = state == 1;
+        self.playingChanged();
     }
     pub fn surfaceSizeUpdated(&mut self, width: u32, height: u32) {
         self.setSurfaceSize(width, height);
