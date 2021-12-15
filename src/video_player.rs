@@ -80,10 +80,10 @@ impl MDKPlayer {
         })
     }
 
-    pub fn start_processing<F: FnMut(i32, u32, u32, &mut [u8]) + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
+    pub fn start_processing<F: FnMut(i32, f64, u32, u32, &mut [u8]) + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
         
         // assert!(to_ms > from_ms);
-        let func: Box<dyn FnMut(i32, u32, u32, &mut [u8])> = Box::new(cb);
+        let func: Box<dyn FnMut(i32, f64, u32, u32, &mut [u8])> = Box::new(cb);
 
         let cb_ptr = Box::into_raw(func);
         let ranges_ptr = ranges_ms.as_ptr();
@@ -91,13 +91,13 @@ impl MDKPlayer {
 
         cpp!(unsafe [self as "MDKPlayer *", id as "uint64_t", width as "uint64_t", height as "uint64_t", yuv as "bool", ranges_ptr as "std::pair<uint64_t, uint64_t>*", ranges_len as "uint64_t", cb_ptr as "TraitObject2"] {
             std::vector<std::pair<uint64_t, uint64_t>> ranges(ranges_ptr, ranges_ptr + ranges_len);
-            self->initProcessingPlayer(id, width, height, yuv, ranges, [cb_ptr](int frame, int width, int height, const uint8_t *bits, uint64_t bitsSize) {
-                rust!(Rust_MDKPlayer_videoProcess [cb_ptr: *mut dyn FnMut(i32, u32, u32, &mut [u8]) as "TraitObject2", frame: i32 as "int", width: u32 as "uint32_t", height: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] {
+            self->initProcessingPlayer(id, width, height, yuv, ranges, [cb_ptr](int frame, double timestamp, int width, int height, const uint8_t *bits, uint64_t bitsSize) {
+                rust!(Rust_MDKPlayer_videoProcess [cb_ptr: *mut dyn FnMut(i32, f64, u32, u32, &mut [u8]) as "TraitObject2", frame: i32 as "int", timestamp: f64 as "double", width: u32 as "uint32_t", height: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] {
                     let pixels = unsafe { std::slice::from_raw_parts_mut(bits, bitsSize as usize) };
                     
                     let mut cb = unsafe { Box::from_raw(cb_ptr) };
 
-                    cb(frame, width, height, pixels);
+                    cb(frame, timestamp, width, height, pixels);
                     if frame >= 0 {
                         let _ = Box::into_raw(cb); // leak again so it doesn't get deleted here
                     }

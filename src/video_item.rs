@@ -6,7 +6,7 @@ use qmetaobject::scenegraph::*;
 use qmetaobject::*;
 use crate::video_player::*;
 
-type ProcessPixelsCb = Box<dyn Fn(u32, u32, u32, u32, &mut [u8]) -> (u32, u32, u32, *mut u8)>;
+type ProcessPixelsCb = Box<dyn Fn(u32, f64, u32, u32, u32, &mut [u8]) -> (u32, u32, u32, *mut u8)>;
 type ResizeCb = Box<dyn Fn(u32, u32)>;
 
 pub enum QSGImageNode {}
@@ -133,9 +133,9 @@ impl MDKVideoItem {
         }
     }
 
-    fn process_pixels(&mut self, frame: u32, width: u32, height: u32, stride: u32, pixels: &mut [u8]) -> (u32, u32, u32, *mut u8) {
+    fn process_pixels(&mut self, frame: u32, timestamp: f64, width: u32, height: u32, stride: u32, pixels: &mut [u8]) -> (u32, u32, u32, *mut u8) {
         if let Some(ref mut proc) = self.m_processPixelsCb {
-            proc(frame, width, height, stride, pixels)
+            proc(frame, timestamp, width, height, stride, pixels)
         } else {
             (width, height, stride, pixels.as_mut_ptr())
         }
@@ -151,7 +151,7 @@ impl MDKVideoItem {
         self.m_player.set_playback_range(from_ms, to_ms);
     }
 
-    pub fn startProcessing<F: FnMut(i32, u32, u32, &mut [u8]) + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
+    pub fn startProcessing<F: FnMut(i32, f64, u32, u32, &mut [u8]) + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
         self.m_player.start_processing(id, width, height, yuv, ranges_ms, cb);
     }
 }
@@ -164,19 +164,19 @@ fn qimage_from_parts(parts: (u32, u32, u32, *mut u8)) -> QImage {
 }
 
 cpp! {{
-    QImage processPixelsCb(QQuickItem *item, uint32_t frame, const QImage &img) {
+    QImage processPixelsCb(QQuickItem *item, uint32_t frame, double timestamp, const QImage &img) {
         uint32_t width = img.width();
         uint32_t height = img.height();
         uint32_t stride = img.bytesPerLine();
         const uint8_t *bits = img.constBits();
         uint64_t bitsSize = img.sizeInBytes();
-        return rust!(Rust_MDKPlayerItem_processPixels [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", width: u32 as "uint32_t", height: u32 as "uint32_t", stride: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] -> QImage as "QImage" {
+        return rust!(Rust_MDKPlayerItem_processPixels [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", timestamp: f64 as "double", width: u32 as "uint32_t", height: u32 as "uint32_t", stride: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] -> QImage as "QImage" {
             let slice = unsafe { std::slice::from_raw_parts_mut(bits, bitsSize as usize) };
             
             let mut vid_item = MDKVideoItem::get_from_cpp(item);
             let mut vid_item = unsafe { &mut *vid_item.as_ptr() }; // vid_item.borrow_mut()
 
-            qimage_from_parts(vid_item.process_pixels(frame, width, height, stride, slice))
+            qimage_from_parts(vid_item.process_pixels(frame, timestamp, width, height, stride, slice))
         });
     };
 }}

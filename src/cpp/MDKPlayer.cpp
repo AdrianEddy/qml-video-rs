@@ -16,8 +16,8 @@
 #include "mdk/Player.h"
 #include "mdk/VideoFrame.h"
 
-typedef std::function<QImage(QQuickItem *item, uint32_t frame, const QImage &img)> ProcessPixelsCb;
-typedef std::function<void(int32_t frame, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize)> VideoProcessCb;
+typedef std::function<QImage(QQuickItem *item, uint32_t frame, double timestamp, const QImage &img)> ProcessPixelsCb;
+typedef std::function<void(int32_t frame, double timestamp, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize)> VideoProcessCb;
 
 void printMd(const std::map<std::string, std::string> &md) {
     for (auto &x : md) {
@@ -214,9 +214,9 @@ public:
             auto img = toImage();
             if (!m_videoLoaded || !m_player) return;
 
-            int frame = std::ceil(timestamp * m_fps); 
+            int frame = std::ceil(std::round(timestamp * m_fps * 100) / 100.0);
 
-            const auto img2 = m_processPixels(m_item, frame, img);
+            const auto img2 = m_processPixels(m_item, frame, timestamp * 1000.0, img);
             if (!img2.isNull() && img2.constBits()) {
                 fromImage(img2);
             }
@@ -391,7 +391,7 @@ public:
 
         player->onFrame<mdk::VideoFrame>([cb, width, height, id, range_id, yuv, ranges, this](mdk::VideoFrame &v, int) {
             if (!v || v.timestamp() == mdk::TimestampEOS) { // AOT frame(1st frame, seek end 1st frame) is not valid, but format is valid. eof frame format is invalid
-                cb(-1, 0, 0, 0, 0);
+                cb(-1, -1.0, 0, 0, 0, 0);
                 m_processingPlayers[id].reset();
                 delete range_id;
                 return 0;
@@ -410,7 +410,7 @@ public:
                     return 0;
                 }
                 m_processingPlayers[id]->set(State::Stopped);
-                cb(-1, 0, 0, 0, 0);
+                cb(-1, -1.0, 0, 0, 0, 0);
                 m_processingPlayers[id].reset();
                 delete range_id;
                 return 0;
@@ -419,13 +419,14 @@ public:
             auto md = m_processingPlayers[id]->mediaInfo();
             if (!md.video.empty()) {
                 auto vmd = md.video[0];
-                auto frame_num = std::ceil(v.timestamp() * vmd.codec.frame_rate);
+               
+                auto frame_num = std::ceil(std::round(v.timestamp() * vmd.codec.frame_rate * 100) / 100.0);
 
                 auto vscaled = v.to(yuv? mdk::PixelFormat::YUV420P : mdk::PixelFormat::RGBA, width, height);
                 auto ptr = vscaled.bufferData();
                 auto ptr_size = vscaled.bytesPerLine() * vscaled.height();
 
-                cb(frame_num, vscaled.width(), vscaled.height(), ptr, ptr_size);
+                cb(frame_num, timestamp_ms, vscaled.width(), vscaled.height(), ptr, ptr_size);
             }
             return 0;
         });

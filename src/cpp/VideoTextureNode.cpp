@@ -11,6 +11,9 @@
 #include <private/qsgtexture_p.h>
 #include <Metal/Metal.h>
 #endif
+#if __has_include(<vulkan/vulkan_core.h>)
+#include <vulkan/vulkan_core.h>
+#endif
 #include "mdk/Player.h"
 #include "mdk/RenderAPI.h"
 using namespace std;
@@ -94,7 +97,7 @@ public:
                 ra.phy_device = *static_cast<VkPhysicalDevice *>(rif->getResource(m_window, QSGRendererInterface::PhysicalDeviceResource));
                 ra.opaque = this;
                 ra.rt = VkImage(m_texture->nativeTexture().object);
-                ra.renderTargetInfo = [](void* opaque, int* w, int* h, VkFormat* fmt, VkImageLayout* layout) {
+                ra.renderTargetInfo = [](void* opaque, int* w, int* h, VkFormat* fmt, VkImageLayout* layout) -> int {
                     auto node = static_cast<VideoTextureNodePriv*>(opaque);
                     *w = node->m_size.width();
                     *h = node->m_size.height();
@@ -102,7 +105,7 @@ public:
                     *layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                     return 1;
                 };
-                ra.currentCommandBuffer = [](void* opaque){
+                ra.currentCommandBuffer = [](void* opaque) -> VkCommandBuffer {
                     auto node = static_cast<VideoTextureNodePriv*>(opaque);
                     QSGRendererInterface *rif = node->m_window->rendererInterface();
                     auto cmdBuf = *static_cast<VkCommandBuffer *>(rif->getResource(node->m_window, QSGRendererInterface::CommandListResource));
@@ -111,6 +114,8 @@ public:
                 player->setRenderAPI(&ra);
                 if (ra.rt)
                     return QNativeInterface::QSGVulkanTexture::fromNative(ra.rt, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_window, size);
+#else
+                qDebug() << "Vulkan support not compiled";
 #endif // (VK_VERSION_1_0+0) && QT_CONFIG(vulkan)
             } break;
             default: break;
