@@ -152,9 +152,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.108"
+version = "0.2.112"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8521a1b57e76b1ec69af7599e75e38e7b7fad6610f037db8c79b127201b5d119"
+checksum = "1b03d17f364a3a042d5e5d46b053bbbf82c92c9430c592dd4c064dc6ee997125"
 
 [[package]]
 name = "log"
@@ -179,9 +179,9 @@ checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
 
 [[package]]
 name = "once_cell"
-version = "1.8.0"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "692fcb63b64b1758029e0a96ee63e049ce8c5948587f2f7208df04625e5f6b56"
+checksum = "da32515d9f6e6e489d7bc9d84c71b060db7247dc035bbe44eac88cf87486d8d5"
 
 [[package]]
 name = "percent-encoding"
@@ -191,9 +191,9 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.32"
+version = "1.0.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba508cc11742c0dc5c1659771673afbab7a0efab23aa17e854cbab0837ed0b43"
+checksum = "2f84e92c0f7c9d58328b85a78557813e4bd845130db68d7184635344399423b1"
 dependencies = [
  "unicode-xid",
 ]
@@ -201,7 +201,7 @@ dependencies = [
 [[package]]
 name = "qmetaobject"
 version = "0.2.5"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#22b2ebbe3cbbc56a736b0d743599b3af83743553"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#6b5e4766c42d9cca9a0d6b1ebc3f25fbb06421c1"
 dependencies = [
  "cpp",
  "cpp_build",
@@ -215,7 +215,7 @@ dependencies = [
 [[package]]
 name = "qmetaobject_impl"
 version = "0.2.5"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#22b2ebbe3cbbc56a736b0d743599b3af83743553"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#6b5e4766c42d9cca9a0d6b1ebc3f25fbb06421c1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -237,7 +237,7 @@ dependencies = [
 [[package]]
 name = "qttypes"
 version = "0.2.6"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#22b2ebbe3cbbc56a736b0d743599b3af83743553"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#6b5e4766c42d9cca9a0d6b1ebc3f25fbb06421c1"
 dependencies = [
  "cpp",
  "cpp_build",

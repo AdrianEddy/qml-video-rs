@@ -3,6 +3,9 @@ use qmetaobject::*;
 
 cpp! {{
     struct TraitObject2 { void *data; void *vtable; };
+    #include "src/cpp/VideoTextureNode.h"
+    #include "src/cpp/VideoTextureNode.cpp"
+    #include "src/cpp/MDKPlayer.h"
     #include "src/cpp/MDKPlayer.cpp"
 }}
 cpp_class! { pub unsafe struct MDKPlayer as "MDKPlayer" }

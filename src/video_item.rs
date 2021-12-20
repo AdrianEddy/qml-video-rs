@@ -11,6 +11,11 @@ type ResizeCb = Box<dyn Fn(u32, u32)>;
 
 pub enum QSGImageNode {}
 
+cpp! {{
+    #include <private/qquickshadereffect_p.h>
+
+}}
+
 #[derive(Default, QObject)]
 pub struct MDKVideoItem {
     base: qt_base_class!(trait QQuickItem),
@@ -153,6 +158,10 @@ impl MDKVideoItem {
 
     pub fn startProcessing<F: FnMut(i32, f64, u32, u32, &mut [u8]) + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
         self.m_player.start_processing(id, width, height, yuv, ranges_ms, cb);
+    }
+
+    pub fn get_mdkplayer(&mut self) -> &mut MDKPlayer {
+        &mut self.m_player
     }
 }
 
