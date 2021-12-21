@@ -108,7 +108,7 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
 }
 
 // Read texture to QImage. This copies data from GPU to CPU
-QImage VideoTextureNodePriv::toImage() {
+QImage VideoTextureNodePriv::toImage(bool normalized) {
     if (!m_item || !m_texture || !m_item->window()) return QImage();
     auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
     auto rhi = context->rhi();
@@ -135,19 +135,19 @@ QImage VideoTextureNodePriv::toImage() {
     const uchar *p = reinterpret_cast<const uchar *>(m_readbackResult->data.constData());
     QImage ret(p, m_readbackResult->pixelSize.width(), m_readbackResult->pixelSize.height(), imageFormat);
 
-    if (m_window->rendererInterface()->graphicsApi() == QSGRendererInterface::OpenGLRhi)
+    if (normalized && rhi->isYUpInFramebuffer())
         ret.mirror();
     
     return ret;
 }
 
 // Upload QImage to texture. This copies data from CPU to GPU
-bool VideoTextureNodePriv::fromImage(const QImage &img) {
+bool VideoTextureNodePriv::fromImage(const QImage &img, bool normalized) {
     if (!m_item || !m_texture || !m_item->window()) return false;
     auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
     auto rhi = context->rhi();
 
-    if (m_window->rendererInterface()->graphicsApi() == QSGRendererInterface::OpenGLRhi)
+    if (normalized && rhi->isYUpInFramebuffer())
         const_cast<QImage&>(img).mirror();
 
     QRhiCommandBuffer *cb = context->currentFrameCommandBuffer();

@@ -27,10 +27,10 @@ public:
     QSGTexture *createTexture(mdk::Player *player, const QSize &size);
 
     // Read texture to QImage. This copies data from GPU to CPU
-    QImage toImage();
+    QImage toImage(bool normalized = false);
 
     // Upload QImage to texture. This copies data from CPU to GPU
-    bool fromImage(const QImage &img);
+    bool fromImage(const QImage &img, bool normalized = false);
 
     void releaseResources();
 
