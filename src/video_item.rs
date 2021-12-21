@@ -198,7 +198,7 @@ impl QQuickItem for MDKVideoItem {
     fn release_resources(&mut self) {
         let player = &self.m_player;
         cpp!(unsafe [player as "MDKPlayer*"] {
-            qDebug() << "release_resources" << player;
+            // qDebug() << "release_resources" << player;
             player->destroyPlayer();
         });
     }

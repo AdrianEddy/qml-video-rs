@@ -126,27 +126,27 @@ void MDKPlayer::setupPlayer() {
     m_player->setPlaybackRate(m_playbackRate);
 
     m_player->onStateChanged([this](mdk::State state) {
-        qDebug() << "onStateChanged" <<
-            QString(state == mdk::State::NotRunning?  "NotRunning"  : "") +       
-            QString(state == mdk::State::Running?     "Running"     : "") +       
-            QString(state == mdk::State::Paused?      "Paused"      : "");
+        // qDebug() << "onStateChanged" <<
+        //     QString(state == mdk::State::NotRunning?  "NotRunning"  : "") +       
+        //     QString(state == mdk::State::Running?     "Running"     : "") +       
+        //     QString(state == mdk::State::Paused?      "Paused"      : "");
         
         QMetaObject::invokeMethod(m_item, "stateChanged", Q_ARG(int, int(state)));
     });
     
     m_player->onMediaStatusChanged([this](mdk::MediaStatus status) -> bool {
         
-        qDebug() << "onMediaStatusChanged" <<
-            QString(status & mdk::MediaStatus::Unloaded?  "Unloaded | "  : "") +       
-            QString(status & mdk::MediaStatus::Loading?   "Loading | "   : "") +    
-            QString(status & mdk::MediaStatus::Loaded?    "Loaded | "    : "") +  
-            QString(status & mdk::MediaStatus::Prepared?  "Prepared | "  : "") +      
-            QString(status & mdk::MediaStatus::Stalled?   "Stalled | "   : "") +    
-            QString(status & mdk::MediaStatus::Buffering? "Buffering | " : "") +        
-            QString(status & mdk::MediaStatus::Buffered?  "Buffered | "  : "") +      
-            QString(status & mdk::MediaStatus::End?       "End | "       : "") +    
-            QString(status & mdk::MediaStatus::Seeking?   "Seeking | "   : "") +     
-            QString(status & mdk::MediaStatus::Invalid?   "Invalid | "   : "");
+        // qDebug() << "onMediaStatusChanged" <<
+        //     QString(status & mdk::MediaStatus::Unloaded?  "Unloaded | "  : "") +       
+        //     QString(status & mdk::MediaStatus::Loading?   "Loading | "   : "") +    
+        //     QString(status & mdk::MediaStatus::Loaded?    "Loaded | "    : "") +  
+        //     QString(status & mdk::MediaStatus::Prepared?  "Prepared | "  : "") +      
+        //     QString(status & mdk::MediaStatus::Stalled?   "Stalled | "   : "") +    
+        //     QString(status & mdk::MediaStatus::Buffering? "Buffering | " : "") +        
+        //     QString(status & mdk::MediaStatus::Buffered?  "Buffered | "  : "") +      
+        //     QString(status & mdk::MediaStatus::End?       "End | "       : "") +    
+        //     QString(status & mdk::MediaStatus::Seeking?   "Seeking | "   : "") +     
+        //     QString(status & mdk::MediaStatus::Invalid?   "Invalid | "   : "");
 
         if (!m_videoLoaded && (status & mdk::MediaStatus::Loaded) && (status & mdk::MediaStatus::Prepared)) {
             auto md = m_player->mediaInfo();
