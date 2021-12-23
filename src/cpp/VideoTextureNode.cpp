@@ -8,7 +8,12 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
     auto sgrc = QQuickItemPrivate::get(m_item)->sceneGraphRenderContext();
     auto rhi = sgrc->rhi();
     m_texture = rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource | QRhiTexture::UsedWithLoadStore);
+    m_texture2 = rhi->newTexture(QRhiTexture::RGBA8, QSize(16, 16), 1, QRhiTexture::UsedAsTransferSource);
     if (!m_texture->create()) {
+        releaseResources();
+        return nullptr;
+    }
+    if (!m_texture2->create()) {
         releaseResources();
         return nullptr;
     }
@@ -176,6 +181,11 @@ void VideoTextureNodePriv::releaseResources() {
         m_texture->destroy();
         delete m_texture;
         m_texture = nullptr;
+    }
+    if (m_texture2) {
+        m_texture2->destroy();
+        delete m_texture2;
+        m_texture2 = nullptr;
     }
     delete m_readbackResult;
     m_readbackResult = nullptr;

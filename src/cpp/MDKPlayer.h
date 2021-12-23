@@ -38,6 +38,7 @@ public:
     void setupNode(QSGImageNode *node, QQuickItem *item, ProcessPixelsCb &&processPixels);
 
     void setupGpuCompute(std::function<bool(QSize texSize, QSizeF itemSize)> &&initCb, std::function<bool(double, int32_t, bool)> &&renderCb, std::function<void()> &&cleanupCb);
+    void cleanupGpuCompute();
 
     void setupPlayer();
 

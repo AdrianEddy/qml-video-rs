@@ -37,6 +37,7 @@ public:
     QRhiReadbackResult *m_readbackResult{nullptr};
 
     QRhiTexture *m_texture{nullptr};
+    QRhiTexture *m_texture2{nullptr};
     QRhiTextureRenderTarget *m_rt{nullptr};
     QRhiRenderPassDescriptor *m_rtRp{nullptr};
     

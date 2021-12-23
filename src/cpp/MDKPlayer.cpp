@@ -200,6 +200,18 @@ void MDKPlayer::windowBeforeRendering() {
     bool processed = false;
     if (m_firstFrameLoaded.load()) {
         if (m_gpuProcessingInited && m_gpuProcessRender) {
+            {
+                // Workaround for the synchronization issue
+                // For some reason reading a dummy texture causes the pipeline to flush or something
+                auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
+                auto rhi = context->rhi();
+                QRhiResourceUpdateBatch *resourceUpdates = rhi->nextResourceUpdateBatch();
+                QRhiReadbackResult *rbResult = new QRhiReadbackResult();
+                rbResult->completed = [rbResult] { delete rbResult; };
+                resourceUpdates->readBackTexture({ m_texture2 }, rbResult);
+                context->currentFrameCommandBuffer()->resourceUpdate(resourceUpdates);
+            }
+            
             processed = m_gpuProcessRender(timestamp, frame, false);
             if (!processed) {
                 qDebug() << "Failed to run the GPU compute shader";
@@ -437,6 +449,11 @@ void MDKPlayer::setupGpuCompute(std::function<bool(QSize texSize, QSizeF itemSiz
     m_gpuProcessInit = initCb;
     m_gpuProcessRender = renderCb;
     m_gpuProcessCleanup = cleanupCb;
+    m_syncNext = true;
+}
+void MDKPlayer::cleanupGpuCompute() {
+    m_gpuProcessingInited = false;
+    if (m_gpuProcessCleanup) m_gpuProcessCleanup();
 }
 QSGDefaultRenderContext *MDKPlayer::rhiContext() {
     return static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
