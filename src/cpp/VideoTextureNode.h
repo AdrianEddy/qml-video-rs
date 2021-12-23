@@ -20,6 +20,8 @@
 #   include <vulkan/vulkan_core.h>
 #endif
 
+#define qDebug2(func) QMessageLogger(__FILE__, __LINE__, func).debug(QLoggingCategory("MDKPlayer"))
+
 namespace mdk { class Player; }
 
 class VideoTextureNodePriv {

@@ -8,7 +8,7 @@ using namespace mdk;
 
 void printMd(const std::map<std::string, std::string> &md) {
     for (auto &x : md) {
-        qDebug() << QString::fromStdString(x.first) << " = " << QString::fromStdString(x.second);
+        qDebug2("printMd") << QString::fromStdString(x.first) << " = " << QString::fromStdString(x.second);
     }
 }
 
@@ -118,7 +118,7 @@ void MDKPlayer::setupPlayer() {
             QMetaObject::invokeMethod(m_item, "metadataLoaded", Q_ARG(QJsonObject, obj));
             m_firstFrameLoaded = true;
         }
-        qDebug() << QString::fromUtf8(evt.category.c_str(), evt.category.size()) << QString::fromUtf8(evt.detail.c_str(), evt.detail.size());
+        qDebug2("m_player->onEvent") << QString::fromUtf8(evt.category.c_str(), evt.category.size()) << QString::fromUtf8(evt.detail.c_str(), evt.detail.size());
         return true;
     });
 
@@ -126,7 +126,7 @@ void MDKPlayer::setupPlayer() {
     m_player->setPlaybackRate(m_playbackRate);
 
     m_player->onStateChanged([this](mdk::State state) {
-        // qDebug() << "onStateChanged" <<
+        // qDebug2("m_player->onStateChanged") <<
         //     QString(state == mdk::State::NotRunning?  "NotRunning"  : "") +       
         //     QString(state == mdk::State::Running?     "Running"     : "") +       
         //     QString(state == mdk::State::Paused?      "Paused"      : "");
@@ -136,7 +136,7 @@ void MDKPlayer::setupPlayer() {
     
     m_player->onMediaStatusChanged([this](mdk::MediaStatus status) -> bool {
         
-        // qDebug() << "onMediaStatusChanged" <<
+        // qDebug2("m_player->onMediaStatusChanged") <<
         //     QString(status & mdk::MediaStatus::Unloaded?  "Unloaded | "  : "") +       
         //     QString(status & mdk::MediaStatus::Loading?   "Loading | "   : "") +    
         //     QString(status & mdk::MediaStatus::Loaded?    "Loaded | "    : "") +  
@@ -183,7 +183,7 @@ void MDKPlayer::setupPlayer() {
 
     /*m_player->onFrame<mdk::VideoFrame>([this](mdk::VideoFrame &frame, int track) -> int {
         //QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, frame.timestamp() * 1000.0));
-        // qDebug() << "frame" << track << frame.timestamp() << (int)frame.format() << frame.planeCount() << frame.bufferData(0);
+        // qDebug2("m_player->onFrame") << "frame" << track << frame.timestamp() << (int)frame.format() << frame.planeCount() << frame.bufferData(0);
         return 0;
     });*/
 }
@@ -214,7 +214,7 @@ void MDKPlayer::windowBeforeRendering() {
             
             processed = m_gpuProcessRender(timestamp, frame, false);
             if (!processed) {
-                qDebug() << "Failed to run the GPU compute shader";
+                qDebug2("MDKPlayer::windowBeforeRendering") << "Failed to run the GPU compute shader";
             }
         }
         if (!processed && m_processPixels) {
@@ -248,7 +248,7 @@ void MDKPlayer::sync(QSize newSize, bool force) {
     auto tex = createTexture(m_player.get(), m_size);
     if (!tex)
         return;
-    qDebug() << "created texture" << tex << m_size;
+    qDebug2("MDKPlayer::sync") << "created texture" << tex << m_size;
     QMetaObject::invokeMethod(m_item, "surfaceSizeUpdated", Q_ARG(uint, m_size.width()), Q_ARG(uint, m_size.height()));
     m_node->setTexture(tex);
     m_node->setOwnsTexture(true);
