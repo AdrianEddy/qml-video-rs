@@ -31,7 +31,7 @@ fn main() {
     private_include("QtQml");
 
     let sdk: HashMap<&str, (&str, &str, &str, &str)> = vec![
-        ("windows",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-windows-desktop-vs2019.7z?viasf=1", "lib/x64/",                      "mdk.lib",    "include/")),
+        ("windows",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-windows-desktop-vs2022.7z?viasf=1", "lib/x64/",                      "mdk.lib",    "include/")),
         // TODO: linux
         ("macos",    ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-macOS-x86_64.tar.xz?viasf=1",       "lib/mdk.framework/Versions/A/", "mdk",        "include/")),
         ("android",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-android.7z?viasf=1",                "lib/arm64-v8a/",                "libmdk.so",  "include/")),
@@ -63,7 +63,9 @@ fn main() {
     } else {
         panic!("Unable to download or extract mdk-sdk. Please make sure you have 7z in PATH or download mdk manually from https://sourceforge.net/projects/mdk-sdk/ and extract to {}", env::var("OUT_DIR").unwrap());
     }
-
+    if target_os == "android" {
+        config.flag("-std=c++17");
+    }
     config
         .include(&qt_include_path)
         .flag_if_supported("-std=c++17")

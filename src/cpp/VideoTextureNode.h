@@ -19,6 +19,9 @@
 #if __has_include(<vulkan/vulkan_core.h>)
 #   include <vulkan/vulkan_core.h>
 #endif
+#if QT_CONFIG(vulkan)
+#include <QtGui/private/qrhivulkan_p.h>
+#endif
 
 #define qDebug2(func) QMessageLogger(__FILE__, __LINE__, func).debug(QLoggingCategory("MDKPlayer"))
 

@@ -101,4 +101,16 @@ private:
     QUrl m_pendingUrl;
 };
 
+// Simple wrapper class to workaround class alignment issues when using it from Rust
+class MDKPlayerWrapper {
+public:
+    MDKPlayerWrapper() {
+        mdkplayer = new MDKPlayer();
+    }
+    ~MDKPlayerWrapper() {
+        delete mdkplayer;
+    }
+    MDKPlayer *mdkplayer{nullptr};
+};
+
 #endif
