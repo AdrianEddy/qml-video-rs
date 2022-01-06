@@ -7,7 +7,11 @@ using namespace mdk;
 QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize &size) {
     auto sgrc = QQuickItemPrivate::get(m_item)->sceneGraphRenderContext();
     auto rhi = sgrc->rhi();
-    m_texture = rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource | QRhiTexture::UsedWithLoadStore);
+    auto flags = QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource;
+    if (rhi->isFeatureSupported(QRhi::Compute)) {
+        flags |= QRhiTexture::UsedWithLoadStore;
+    }
+    m_texture = rhi->newTexture(QRhiTexture::RGBA8, size, 1, flags);
     m_texture2 = rhi->newTexture(QRhiTexture::RGBA8, QSize(16, 16), 1, QRhiTexture::UsedAsTransferSource);
     if (!m_texture->create()) {
         releaseResources();

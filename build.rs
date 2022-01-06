@@ -15,10 +15,6 @@ fn main() {
     if cfg!(target_os = "macos") {
         config.flag("-F");
         config.flag(&qt_library_path);
-        println!("cargo:rustc-include-search={}/QtCore.framework/Versions/A/Headers/", qt_library_path);
-        println!("cargo:rustc-include-search={}/QtGui.framework/Versions/A/Headers/", qt_library_path);
-        println!("cargo:rustc-include-search={}/QtQuick.framework/Versions/A/Headers/", qt_library_path);
-        println!("cargo:rustc-include-search={}/QtQml.framework/Versions/A/Headers/", qt_library_path);
     }
 
     let mut public_include = |name| {
