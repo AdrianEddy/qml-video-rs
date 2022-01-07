@@ -59,7 +59,7 @@ fn main() {
             config.flag_if_supported("-fobjc-arc");
             config.flag("-x").flag("objective-c++");
             let _ = Command::new("mkdir").args(&[&format!("{}/../../../../Frameworks", env::var("OUT_DIR").unwrap())]).status();
-            Command::new("cp").args(&["-R", &format!("{}/lib/mdk.framework", path), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
+            Command::new("cp").args(&["-af", &format!("{}/lib/mdk.framework", path), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
         } else {
             println!("cargo:rustc-link-search={}{}", path, entry.1);
             println!("cargo:rustc-link-lib=mdk");
