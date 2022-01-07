@@ -42,11 +42,11 @@ fn main() {
     private_include("QtQml");
 
     let sdk: HashMap<&str, (&str, &str, &str, &str)> = vec![
-        ("windows",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-windows-desktop-vs2022.7z?viasf=1", "lib/x64/",                      "mdk.lib",    "include/")),
-        // TODO: linux
-        ("macos",    ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-macOS-x86_64.tar.xz?viasf=1",       "lib/mdk.framework/Versions/A/", "mdk",        "include/")),
-        ("android",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-android.7z?viasf=1",                "lib/arm64-v8a/",                "libmdk.so",  "include/")),
-        ("ios",      ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-iOS.tar.xz?viasf=1",                "lib/mdk.framework/",            "mdk",        "include/")),
+        ("windows",  ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-windows-desktop-vs2022.7z?viasf=1", "lib/x64/",                      "mdk.lib",    "include/")),
+        ("linux",    ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-linux.tar.xz?viasf=1",              "lib/amd64/",                    "libmdk.so",  "include/")),
+        ("macos",    ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-macOS.tar.xz?viasf=1",              "lib/mdk.framework/Versions/A/", "mdk",        "include/")),
+        ("android",  ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-android.7z?viasf=1",                "lib/arm64-v8a/",                "libmdk.so",  "include/")),
+        ("ios",      ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-iOS.tar.xz?viasf=1",                "lib/mdk.framework/",            "mdk",        "include/")),
     ].into_iter().collect();
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
@@ -70,6 +70,10 @@ fn main() {
         }
         if target_os == "android" {
             std::fs::copy(format!("{}/lib/arm64-v8a/libffmpeg.so", path), format!("{}/../../../libffmpeg.so", env::var("OUT_DIR").unwrap())).unwrap();
+            std::fs::copy(format!("{}/lib/arm64-v8a/libqtav-mediacodec.so", path), format!("{}/../../../libqtav-mediacodec.so", env::var("OUT_DIR").unwrap())).unwrap();
+        }
+        if target_os == "linux" {
+            std::fs::copy(format!("{}/lib/amd64/libffmpeg.so.5", path), format!("{}/../../../libffmpeg.so.5", env::var("OUT_DIR").unwrap())).unwrap();
         }
         config.include(format!("{}{}", path, entry.3));
     } else {
