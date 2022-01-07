@@ -108,7 +108,7 @@ fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error
         std::fs::remove_file(format!("{}/mdk-sdk{}", out_dir, ext))?;
         if ext == ".tar.xz" {
             let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-            if target_os == "macos" || target_os == "ios" {
+            if target_os == "macos" || target_os == "ios" || target_os == "linux" {
                 Command::new("tar").current_dir(&out_dir).args(&["-xf", "mdk-sdk.tar"]).status()?;
             } else {
                 Command::new("7z").current_dir(&out_dir).args(&["x", "-y", "mdk-sdk.tar"]).status()?;
