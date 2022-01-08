@@ -29,10 +29,10 @@ void MDKPlayer::initPlayer() {
     "D3D11",
     "DXVA",
 #elif (__linux__+0)
-    "VAAPI",
-    "VDPAU",
     "CUDA",
+    "VDPAU",
     "MMAL",
+    "VAAPI",
 #endif
     "FFmpeg"});
 
