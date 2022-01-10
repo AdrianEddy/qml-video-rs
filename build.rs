@@ -74,6 +74,7 @@ fn main() {
         }
         if target_os == "linux" {
             std::fs::copy(format!("{}/lib/amd64/libffmpeg.so.5", path), format!("{}/../../../libffmpeg.so.5", env::var("OUT_DIR").unwrap())).unwrap();
+            std::fs::copy(format!("{}/lib/amd64/libmdk.so", path), format!("{}/../../../libmdk.so", env::var("OUT_DIR").unwrap())).unwrap();
         }
         config.include(format!("{}{}", path, entry.3));
     } else {
