@@ -13,7 +13,6 @@ pub enum QSGImageNode {}
 
 cpp! {{
     #include <private/qquickshadereffect_p.h>
-
 }}
 
 #[derive(Default, QObject)]
@@ -163,6 +162,8 @@ impl MDKVideoItem {
     pub fn get_mdkplayer(&mut self) -> &mut MDKPlayerWrapper {
         &mut self.m_player
     }
+
+    pub fn setGlobalOption(key: &str, val: &str) { MDKPlayerWrapper::set_global_option(QString::from(key), QString::from(val)); }
 }
 
 fn qimage_from_parts(parts: (u32, u32, u32, *mut u8)) -> QImage {

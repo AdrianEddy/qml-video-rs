@@ -83,6 +83,12 @@ impl MDKPlayerWrapper {
         })
     }
 
+    pub fn set_global_option(key: QString, val: QString) {
+        cpp!(unsafe [key as "QString", val as "QString"] {
+            SetGlobalOption(qUtf8Printable(key), qUtf8Printable(val));
+        })
+    }
+
     pub fn start_processing<F: FnMut(i32, f64, u32, u32, &mut [u8]) + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
         
         // assert!(to_ms > from_ms);
