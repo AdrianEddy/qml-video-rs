@@ -16,25 +16,36 @@ MDKPlayer::MDKPlayer() { }
 
 void MDKPlayer::initPlayer() {
     m_player = std::make_unique<mdk::Player>();
-    m_player->setDecoders(mdk::MediaType::Video, {
-#if (__APPLE__+0)
-    "VT",
-#elif (__ANDROID__+0)
-    "AMediaCodec:java=1:copy=0:surface=1:async=0",
-#elif (_WIN32+0)
-    "MFT:d3d=11",
-    //"CUDA",
-    //"NVDEC",
-    //"CUVID",
-    "D3D11",
-    "DXVA",
-#elif (__linux__+0)
-    "CUDA",
-    "VDPAU",
-    "MMAL",
-    "VAAPI",
-#endif
-    "FFmpeg"});
+    
+    QString overrideDecoders = QString(qgetenv("MDK_DECODERS")).trimmed();
+
+    if (!overrideDecoders.isEmpty()) {
+        std::vector<std::string> vec;
+        for (const auto &x : overrideDecoders.split(",")) {
+            vec.push_back(x.toStdString());
+        }
+        m_player->setDecoders(mdk::MediaType::Video, vec);
+    } else {
+        m_player->setDecoders(mdk::MediaType::Video, {
+    #if (__APPLE__+0)
+        "VT",
+    #elif (__ANDROID__+0)
+        "AMediaCodec:java=1:copy=0:surface=1:async=0",
+    #elif (_WIN32+0)
+        "MFT:d3d=11",
+        //"CUDA",
+        //"NVDEC",
+        //"CUVID",
+        "D3D11",
+        "DXVA",
+    #elif (__linux__+0)
+        "CUDA",
+        "VDPAU",
+        "MMAL",
+        "VAAPI",
+    #endif
+        "FFmpeg"});
+    }
 
     if (m_item && m_node && m_window) {
         setupPlayer();

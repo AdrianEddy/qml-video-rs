@@ -89,6 +89,23 @@ impl MDKPlayerWrapper {
         })
     }
 
+    pub fn set_log_handler<F: Fn(i32, String) + 'static>(cb: F) {
+        let func: Box<dyn Fn(i32, String)> = Box::new(cb);
+        let cb_ptr = Box::into_raw(func);
+        cpp!(unsafe [cb_ptr as "TraitObject2"] {
+            setLogHandler([cb_ptr](LogLevel level, const char *text) {
+                rust!(Rust_MDKPlayer_logHandler [cb_ptr: *mut dyn FnMut(i32, String) as "TraitObject2", level: i32 as "int", text: *mut i8 as "const char *"] {
+                    let text = unsafe { std::ffi::CStr::from_ptr(text) }.to_string_lossy().to_string();
+                    
+                    let mut cb = unsafe { Box::from_raw(cb_ptr) };
+
+                    cb(level, text);
+                    let _ = Box::into_raw(cb); // leak again so it doesn't get deleted here
+                });
+            });
+        })
+    }
+
     pub fn start_processing<F: FnMut(i32, f64, u32, u32, &mut [u8]) + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
         
         // assert!(to_ms > from_ms);
