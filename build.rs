@@ -42,7 +42,7 @@ fn main() {
     private_include("QtQml");
 
     let sdk: HashMap<&str, (&str, &str, &str, &str)> = vec![
-        ("windows",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-windows-desktop-vs2022.7z?viasf=1", "lib/x64/",           "mdk.lib",    "include/")),
+        ("windows",  ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-windows-desktop-vs2022.7z?viasf=1", "lib/x64/",           "mdk.lib",    "include/")),
         ("linux",    ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-linux.tar.xz?viasf=1",              "lib/amd64/",         "libmdk.so",  "include/")),
         ("macos",    ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-macOS.tar.xz?viasf=1",              "lib/mdk.framework/", "mdk",        "include/")),
         ("android",  ("https://master.dl.sourceforge.net/project/mdk-sdk/mdk-sdk-android.7z?viasf=1",                "lib/arm64-v8a/",     "libmdk.so",  "include/")),
