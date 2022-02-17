@@ -45,6 +45,7 @@ public:
     void windowBeforeRendering();
 
     void sync(QSize newSize, bool force = false);
+    void forceRedraw() { m_renderedPosition = -1; m_renderedReturnCount = 0; }
 
     void play();
     void pause();
@@ -92,6 +93,8 @@ private:
     std::atomic<bool> m_videoLoaded{false};
     std::atomic<bool> m_firstFrameLoaded{false};
 
+    int64_t m_renderedPosition{-1};
+    int64_t m_renderedReturnCount{0};
     double m_fps{0.0};
     float m_playbackRate{1.0};
     bool m_syncNext{false};

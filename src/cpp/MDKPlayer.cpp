@@ -202,6 +202,11 @@ void MDKPlayer::setupPlayer() {
 void MDKPlayer::windowBeforeRendering() {
     if (!m_videoLoaded || !m_player) return;
 
+    auto position = m_player->position();
+    if (m_renderedPosition == position && m_renderedReturnCount++ > 100) {
+        return;
+    }
+
     m_window->beginExternalCommands();
     double timestamp = m_player->renderVideo(); 
     m_window->endExternalCommands();
@@ -238,6 +243,11 @@ void MDKPlayer::windowBeforeRendering() {
             }
         }
     }
+
+    if (m_renderedPosition != position)
+        m_renderedReturnCount = 0;
+    
+    m_renderedPosition = position;
 
     QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, timestamp * 1000.0));
 }

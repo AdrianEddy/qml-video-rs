@@ -15,6 +15,12 @@ impl MDKPlayerWrapper {
     pub fn pause(&mut self) { cpp!(unsafe [self as "MDKPlayerWrapper *"] { self->mdkplayer->pause(); }) }
     pub fn stop (&mut self) { cpp!(unsafe [self as "MDKPlayerWrapper *"] { self->mdkplayer->stop();  }) }
 
+    pub fn force_redraw(&mut self) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *"] {
+            self->mdkplayer->forceRedraw();
+        })
+    }
+
     pub fn seek_to_timestamp(&mut self, timestamp: f64) {
         cpp!(unsafe [self as "MDKPlayerWrapper *", timestamp as "double"] {
             self->mdkplayer->seekToTimestamp(timestamp);

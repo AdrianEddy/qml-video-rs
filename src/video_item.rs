@@ -41,6 +41,8 @@ pub struct MDKVideoItem {
     pub url:    qt_property!(QUrl; WRITE setUrl),
     pub setUrl: qt_method!(fn(&mut self, url: QUrl)),
 
+    pub forceRedraw: qt_method!(fn(&mut self)),
+
     pub muted: qt_property!(bool; READ getMuted WRITE setMuted NOTIFY mutedChanged),
     pub mutedChanged: qt_signal!(),
 
@@ -84,16 +86,16 @@ impl MDKVideoItem {
     pub fn pause(&mut self) { self.m_player.pause(); }
     pub fn stop (&mut self) { self.m_player.stop(); }
 
-    pub fn setBackgroundColor(&mut self, color: QColor) { self.m_player.set_background_color(color); }
+    pub fn setBackgroundColor(&mut self, color: QColor) { self.m_player.set_background_color(color); self.forceRedraw(); }
     pub fn getBackgroundColor(&self) -> QColor { self.m_player.get_background_color() }
 
-    pub fn setPlaybackRate(&mut self, rate: f32) { self.m_player.set_playback_rate(rate); }
+    pub fn setPlaybackRate(&mut self, rate: f32) { self.m_player.set_playback_rate(rate); self.forceRedraw(); }
     pub fn getPlaybackRate(&self) -> f32 { self.m_player.get_playback_rate() }
 
-    pub fn setCurrentFrame(&mut self, frame: i64)  { self.m_player.seek_to_frame(frame, self.currentFrame); }
-    pub fn setTimestamp(&mut self, timestamp: f64) { self.m_player.seek_to_timestamp(timestamp); }
+    pub fn setCurrentFrame(&mut self, frame: i64)  { self.m_player.seek_to_frame(frame, self.currentFrame); self.forceRedraw(); }
+    pub fn setTimestamp(&mut self, timestamp: f64) { self.m_player.seek_to_timestamp(timestamp); self.forceRedraw(); }
 
-    pub fn setRotation(&self, v: i32) { self.m_player.set_rotation(v); }
+    pub fn setRotation(&mut self, v: i32) { self.m_player.set_rotation(v); self.forceRedraw(); }
     pub fn getRotation(&self) -> i32 { self.m_player.get_rotation() }
 
     pub fn setUrl(&mut self, url: QUrl) {
@@ -103,6 +105,7 @@ impl MDKVideoItem {
         self.url = url.clone();
         self.m_player.set_url(url);
         self.setMuted(prev_muted);
+        self.forceRedraw();
     }
 
     pub fn setMuted(&mut self, v: bool) { self.m_player.set_muted(v); self.mutedChanged(); }
@@ -149,6 +152,7 @@ impl MDKVideoItem {
         self.surfaceWidth = width;
         self.surfaceHeight = height;
         self.metadataChanged();
+        self.forceRedraw();
     }
     
     pub fn setPlaybackRange(&mut self, from_ms: i64, to_ms: i64) {
@@ -162,6 +166,8 @@ impl MDKVideoItem {
     pub fn get_mdkplayer(&mut self) -> &mut MDKPlayerWrapper {
         &mut self.m_player
     }
+
+    pub fn forceRedraw(&mut self) { self.m_player.force_redraw(); }
 
     pub fn setGlobalOption(key: &str, val: &str) { MDKPlayerWrapper::set_global_option(QString::from(key), QString::from(val)); }
     pub fn setLogHandler<F: Fn(i32, String) + 'static>(cb: F) { MDKPlayerWrapper::set_log_handler(cb); }
@@ -209,6 +215,7 @@ impl QQuickItem for MDKVideoItem {
         cpp!(unsafe [obj as "QQuickItem *"] { obj->setFlag(QQuickItem::ItemHasContents); });
 
         self.m_geometryChanged = true;
+        self.forceRedraw();
         (self as &dyn QQuickItem).update();
     }
 
