@@ -38,6 +38,8 @@ pub struct MDKVideoItem {
     pub setTimestamp:     qt_method!(fn(&mut self, timestamp: f64)),
     pub timestampChanged: qt_signal!(),
 
+    pub setFrameRate: qt_method!(fn(&mut self, fps: f64)),
+
     pub url:    qt_property!(QUrl; WRITE setUrl),
     pub setUrl: qt_method!(fn(&mut self, url: QUrl)),
 
@@ -89,6 +91,7 @@ impl MDKVideoItem {
     pub fn setBackgroundColor(&mut self, color: QColor) { self.m_player.set_background_color(color); self.forceRedraw(); }
     pub fn getBackgroundColor(&self) -> QColor { self.m_player.get_background_color() }
 
+    pub fn setFrameRate(&mut self, fps: f64) { self.m_player.set_frame_rate(fps); self.forceRedraw(); }
     pub fn setPlaybackRate(&mut self, rate: f32) { self.m_player.set_playback_rate(rate); self.forceRedraw(); }
     pub fn getPlaybackRate(&self) -> f32 { self.m_player.get_playback_rate() }
 

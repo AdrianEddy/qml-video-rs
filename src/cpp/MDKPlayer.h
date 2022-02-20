@@ -52,8 +52,9 @@ public:
     void stop();
 
     void seekToTimestamp(float timestampMs, bool keyframe = false);
-
     void seekToFrame(int64_t frame, int64_t currentFrame);
+
+    void setFrameRate(float fps);
 
     void setPlaybackRate(float rate);
     float playbackRate();
@@ -107,12 +108,8 @@ private:
 // Simple wrapper class to workaround class alignment issues when using it from Rust
 class MDKPlayerWrapper {
 public:
-    MDKPlayerWrapper() {
-        mdkplayer = new MDKPlayer();
-    }
-    ~MDKPlayerWrapper() {
-        delete mdkplayer;
-    }
+    MDKPlayerWrapper() { mdkplayer = new MDKPlayer(); }
+    ~MDKPlayerWrapper() { delete mdkplayer; }
     MDKPlayer *mdkplayer{nullptr};
 };
 

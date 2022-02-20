@@ -294,6 +294,10 @@ void MDKPlayer::stop() {
     if (!m_videoLoaded || !m_player) return;
     m_player->set(mdk::PlaybackState::Stopped);
 }
+void MDKPlayer::setFrameRate(float fps) {
+    if (!m_player) return;
+    m_player->setFrameRate(fps);
+}
 
 void MDKPlayer::seekToTimestamp(float timestampMs, bool keyframe) {
     if (!m_videoLoaded || !m_player) return;

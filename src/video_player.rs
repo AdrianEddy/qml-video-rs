@@ -20,7 +20,12 @@ impl MDKPlayerWrapper {
             self->mdkplayer->forceRedraw();
         })
     }
-
+    pub fn set_frame_rate(&mut self, fps: f64) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *", fps as "double"] {
+            self->mdkplayer->setFrameRate(fps);
+        })
+    }
+    
     pub fn seek_to_timestamp(&mut self, timestamp: f64) {
         cpp!(unsafe [self as "MDKPlayerWrapper *", timestamp as "double"] {
             self->mdkplayer->seekToTimestamp(timestamp);
