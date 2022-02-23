@@ -43,9 +43,9 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
 name = "cc"
-version = "1.0.72"
+version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22a9137b95ea06864e018375b72adfb7db6e6f68cfc8df5a04d00288050485ee"
+checksum = "2fff2a6927b3bb87f9595d67196a70493f627687a71d87a0d692242c33f58c11"
 
 [[package]]
 name = "cfg-if"
@@ -185,9 +185,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.118"
+version = "0.2.119"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06e509672465a0504304aa87f9f176f2b2b716ed8fb105ebe5c02dc6dce96a94"
+checksum = "1bf2e165bb3457c8e098ea76f3e3bc9db55f87aa90d52d0e6be741470916aaa4"
 
 [[package]]
 name = "log"
@@ -243,8 +243,8 @@ dependencies = [
 
 [[package]]
 name = "qmetaobject"
-version = "0.2.5"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git?branch=android_build_fix#032d74407288510d8a2a9f5da2c251e4cae14f2a"
+version = "0.2.7"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#aa91b6d06cd8bc7579d77787253e31c7fabc86f8"
 dependencies = [
  "cpp",
  "cpp_build",
@@ -257,8 +257,8 @@ dependencies = [
 
 [[package]]
 name = "qmetaobject_impl"
-version = "0.2.5"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git?branch=android_build_fix#032d74407288510d8a2a9f5da2c251e4cae14f2a"
+version = "0.2.7"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#aa91b6d06cd8bc7579d77787253e31c7fabc86f8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -279,8 +279,8 @@ dependencies = [
 
 [[package]]
 name = "qttypes"
-version = "0.2.6"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git?branch=android_build_fix#032d74407288510d8a2a9f5da2c251e4cae14f2a"
+version = "0.2.7"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#aa91b6d06cd8bc7579d77787253e31c7fabc86f8"
 dependencies = [
  "cpp",
  "cpp_build",
@@ -330,9 +330,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.20.3"
+version = "0.20.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b323592e3164322f5b193dc4302e4e36cd8d37158a712d664efae1a5c2791700"
+checksum = "4fbfeb8d0ddb84706bc597a5574ab8912817c52a397f819e5b614e2265206921"
 dependencies = [
  "log",
  "ring",
@@ -352,9 +352,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0486718e92ec9a68fbed73bb5ef687d71103b142595b406835649bebd33f72c7"
+checksum = "a4a3381e03edd24287172047536f20cabde766e2cd3e65e6b00fb3af51c4f38d"
 
 [[package]]
 name = "spin"

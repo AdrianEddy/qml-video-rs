@@ -6,8 +6,8 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
-qmetaobject = { version = "*", git = "https://github.com/AdrianEddy/qmetaobject-rs.git", branch = "android_build_fix", default-features = false, features = ["log"] }
-qttypes     = { version = "*", git = "https://github.com/AdrianEddy/qmetaobject-rs.git", branch = "android_build_fix", default-features = false, features = ["required", "qtquick", "qtquickcontrols2"]}
+qmetaobject = { version = "*", git = "https://github.com/AdrianEddy/qmetaobject-rs.git", default-features = false, features = ["log"] }
+qttypes     = { version = "*", git = "https://github.com/AdrianEddy/qmetaobject-rs.git", default-features = false, features = ["required", "qtquick", "qtquickcontrols2"]}
 cstr = "0.2"
 cpp = "0.5"
 
