@@ -79,6 +79,7 @@ MDKPlayer::~MDKPlayer() {
 }
 
 void MDKPlayer::setUrl(const QUrl &url) {
+    m_overrideFps = 0.0;
     if (!m_item) {
         m_pendingUrl = url;
         return;
@@ -174,7 +175,14 @@ void MDKPlayer::setupPlayer() {
                     v.frames = (double(v.duration) / 1000.0) * v.codec.frame_rate;
                 }
                 m_fps = v.codec.frame_rate;
-                QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, v.duration), Q_ARG(qlonglong, v.frames), Q_ARG(double, v.codec.frame_rate), Q_ARG(uint, v.codec.width), Q_ARG(uint, v.codec.height));
+                double fps = m_fps;
+                m_duration = v.duration;
+                if (m_overrideFps > 0.0) {
+                    m_duration *= m_fps / m_overrideFps;
+                    fps = m_overrideFps;
+                }
+                
+                QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, m_duration), Q_ARG(qlonglong, v.frames), Q_ARG(double, fps), Q_ARG(uint, v.codec.width), Q_ARG(uint, v.codec.height));
             }
             m_player->setLoop(9999999);
             m_videoLoaded = true;
@@ -210,8 +218,14 @@ void MDKPlayer::windowBeforeRendering() {
     m_window->beginExternalCommands();
     double timestamp = m_player->renderVideo(); 
     m_window->endExternalCommands();
+    
+    double fps = m_fps;
+    if (m_overrideFps > 0.0) {
+        timestamp *= m_fps / m_overrideFps;
+        fps = m_overrideFps;
+    }
 
-    int frame = std::ceil(std::round(timestamp * m_fps * 100) / 100.0);
+    int frame = std::ceil(std::round(timestamp * fps * 100.0) / 100.0);
 
     bool processed = false;
     if (m_firstFrameLoaded.load()) {
@@ -297,6 +311,7 @@ void MDKPlayer::stop() {
 void MDKPlayer::setFrameRate(float fps) {
     if (!m_player) return;
     m_player->setFrameRate(fps);
+    m_overrideFps = fps;
 }
 
 void MDKPlayer::seekToTimestamp(float timestampMs, bool keyframe) {
@@ -324,6 +339,10 @@ void MDKPlayer::setPlaybackRate(float rate) { m_playbackRate = rate; if (m_playe
 float MDKPlayer::playbackRate() { return m_player? m_player->playbackRate() : m_playbackRate; }
 
 void MDKPlayer::setPlaybackRange(int64_t from_ms, int64_t to_ms) {
+    if (m_overrideFps > 0.0) {
+        from_ms /= m_fps / m_overrideFps;
+        to_ms   /= m_fps / m_overrideFps;
+    }
     if (m_player) m_player->setRange(from_ms, to_ms);
 }
 
@@ -416,7 +435,7 @@ std::map<std::string, std::string> MDKPlayer::getMediaInfo(const MediaInfo &mi) 
         std::string key = "stream.video[" + std::to_string(i) + "].";
         ret[key + "index"] = std::to_string(v.index);
         ret[key + "start_time"] = std::to_string(v.start_time);
-        ret[key + "duration"] = std::to_string(v.duration);
+        ret[key + "duration"] = std::to_string(m_duration);
         ret[key + "frames"] = std::to_string(v.frames);
         ret[key + "rotation"] = std::to_string(v.rotation);
         for (const auto &x : v.metadata) {
@@ -429,7 +448,7 @@ std::map<std::string, std::string> MDKPlayer::getMediaInfo(const MediaInfo &mi) 
         ret[key + "codec.bit_rate"]     = std::to_string(v.codec.bit_rate);
         ret[key + "codec.profile"]      = std::to_string(v.codec.profile);
         ret[key + "codec.level"]        = std::to_string(v.codec.level);
-        ret[key + "codec.frame_rate"]   = std::to_string(v.codec.frame_rate);
+        ret[key + "codec.frame_rate"]   = std::to_string(m_overrideFps > 0.0? m_overrideFps : v.codec.frame_rate);
         ret[key + "codec.format"]       = std::to_string(v.codec.format);
         ret[key + "codec.format_name"]  = std::string(v.codec.format_name);
         ret[key + "codec.width"]        = std::to_string(v.codec.width);

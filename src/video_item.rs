@@ -125,7 +125,7 @@ impl MDKVideoItem {
     fn videoLoaded(&mut self, duration: f64, frameCount: i64, frameRate: f64, width: u32, height: u32) {
         self.duration     = duration;
         self.frameCount   = frameCount;
-        self.frameRate    = frameRate;
+        self.frameRate    = (frameRate * 10000.0).round() / 10000.0;
         self.videoWidth   = width;
         self.videoHeight  = height;
         

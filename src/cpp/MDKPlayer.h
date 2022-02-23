@@ -97,6 +97,8 @@ private:
     int64_t m_renderedPosition{-1};
     int64_t m_renderedReturnCount{0};
     double m_fps{0.0};
+    double m_overrideFps{0.0};
+    double m_duration{0.0};
     float m_playbackRate{1.0};
     bool m_syncNext{false};
 
