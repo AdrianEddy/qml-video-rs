@@ -9,12 +9,10 @@ fn main() {
     let qt_library_path = env::var("DEP_QT_LIBRARY_PATH").unwrap();
     let qt_version      = env::var("DEP_QT_VERSION").unwrap();
 
-    #[allow(unused_mut)]
     let mut config = cpp_build::Config::new();
 
-    if cfg!(target_os = "macos") {
-        config.flag("-F");
-        config.flag(&qt_library_path);
+    for f in std::env::var("DEP_QT_COMPILE_FLAGS").unwrap().split_terminator(";") {
+        config.flag(f);
     }
 
     let mut public_include = |name| {
@@ -80,20 +78,10 @@ fn main() {
     } else {
         panic!("Unable to download or extract mdk-sdk. Please make sure you have 7z in PATH or download mdk manually from https://sourceforge.net/projects/mdk-sdk/ and extract to {}", env::var("OUT_DIR").unwrap());
     }
-    if target_os == "android" {
-        config.flag("-std=c++17");
-    }
     config
         .include(&qt_include_path)
-        .flag_if_supported("-std=c++17")
-        .flag_if_supported("/std:c++17")
-        .flag_if_supported("/Zc:__cplusplus")
         .build("src/lib.rs");
 
-    if cfg!(target_os = "macos") {
-        config.flag("-F");
-        config.flag(&qt_library_path);
-    }
 }
 
 fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error> {

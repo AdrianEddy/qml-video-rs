@@ -121,9 +121,9 @@ dependencies = [
 
 [[package]]
 name = "cstr"
-version = "0.2.9"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2846d3636dcaff720d311ea8983f5fa7a8288632b2f95145dd4b5819c397fd8"
+checksum = "a60f0dd132e4b67f20fd764d4835d968f666ff1a2f59e432983d168b98424deb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -244,7 +244,7 @@ dependencies = [
 [[package]]
 name = "qmetaobject"
 version = "0.2.7"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#aa91b6d06cd8bc7579d77787253e31c7fabc86f8"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#9e60580d52aa62399f4ef8dfbc3e05ddcfbfb665"
 dependencies = [
  "cpp",
  "cpp_build",
@@ -258,7 +258,7 @@ dependencies = [
 [[package]]
 name = "qmetaobject_impl"
 version = "0.2.7"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#aa91b6d06cd8bc7579d77787253e31c7fabc86f8"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#9e60580d52aa62399f4ef8dfbc3e05ddcfbfb665"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -279,8 +279,8 @@ dependencies = [
 
 [[package]]
 name = "qttypes"
-version = "0.2.7"
-source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#aa91b6d06cd8bc7579d77787253e31c7fabc86f8"
+version = "0.2.8"
+source = "git+https://github.com/AdrianEddy/qmetaobject-rs.git#9e60580d52aa62399f4ef8dfbc3e05ddcfbfb665"
 dependencies = [
  "cpp",
  "cpp_build",
