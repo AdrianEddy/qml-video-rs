@@ -70,6 +70,7 @@ public:
 
     QSGDefaultRenderContext *rhiContext();
     QRhiTexture *rhiTexture();
+    QRhiTexture *rhiTexture2();
     QRhiTextureRenderTarget *rhiRenderTarget();
     QRhiRenderPassDescriptor *rhiRenderPassDescriptor();
     QQuickWindow *qmlWindow();

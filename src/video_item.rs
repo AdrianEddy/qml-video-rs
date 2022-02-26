@@ -115,11 +115,16 @@ impl MDKVideoItem {
     pub fn getMuted(&self) -> bool { self.m_player.get_muted() }
 
     fn frameRendered(&mut self, ts: f64) {
-        self.timestamp = ts.max(0.0);
-        self.currentFrame = ((ts / 1000.0) * self.frameRate).ceil() as i64; // ((self.timestamp / self.duration) * self.frameCount as f64).round().max(0.0) as i64;
-        
-        self.timestampChanged();
-        self.currentFrameChanged();
+        let nts = ts.max(0.0);
+        let ncf = ((nts / 1000.0) * self.frameRate).ceil() as i64; // ((self.timestamp / self.duration) * self.frameCount as f64).round().max(0.0) as i64;
+
+        if nts != self.timestamp || ncf != self.currentFrame {
+            self.timestamp = nts;
+            self.currentFrame = ncf;
+
+            self.timestampChanged();
+            self.currentFrameChanged();
+        }
     }
 
     fn videoLoaded(&mut self, duration: f64, frameCount: i64, frameRate: f64, width: u32, height: u32) {

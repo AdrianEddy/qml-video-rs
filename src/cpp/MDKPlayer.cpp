@@ -32,7 +32,7 @@ void MDKPlayer::initPlayer() {
     #elif (__ANDROID__+0)
         "AMediaCodec:java=1:copy=0:surface=1:async=0",
     #elif (_WIN32+0)
-        "MFT:d3d=11",
+        // "MFT:d3d=11",
         //"CUDA",
         //"NVDEC",
         //"CUVID",
@@ -215,9 +215,12 @@ void MDKPlayer::windowBeforeRendering() {
         return;
     }
 
-    m_window->beginExternalCommands();
+    auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
+    auto cb = context->currentFrameCommandBuffer();
+
+    cb->beginExternal();
     double timestamp = m_player->renderVideo(); 
-    m_window->endExternalCommands();
+    cb->endExternal();
     
     double fps = m_fps;
     if (m_overrideFps > 0.0) {
@@ -230,18 +233,6 @@ void MDKPlayer::windowBeforeRendering() {
     bool processed = false;
     if (m_firstFrameLoaded.load()) {
         if (m_gpuProcessingInited && m_gpuProcessRender) {
-            {
-                // Workaround for the synchronization issue
-                // For some reason reading a dummy texture causes the pipeline to flush or something
-                auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
-                auto rhi = context->rhi();
-                QRhiResourceUpdateBatch *resourceUpdates = rhi->nextResourceUpdateBatch();
-                QRhiReadbackResult *rbResult = new QRhiReadbackResult();
-                rbResult->completed = [rbResult] { delete rbResult; };
-                resourceUpdates->readBackTexture({ m_texture2 }, rbResult);
-                context->currentFrameCommandBuffer()->resourceUpdate(resourceUpdates);
-            }
-            
             processed = m_gpuProcessRender(timestamp, frame, false);
             if (!processed) {
                 qDebug2("MDKPlayer::windowBeforeRendering") << "Failed to run the GPU compute shader";
@@ -504,6 +495,9 @@ QSGDefaultRenderContext *MDKPlayer::rhiContext() {
 }
 QRhiTexture *MDKPlayer::rhiTexture() {
     return m_texture;
+}
+QRhiTexture *MDKPlayer::rhiTexture2() {
+    return m_texture2;
 }
 QRhiTextureRenderTarget *MDKPlayer::rhiRenderTarget() {
     return m_rt;
