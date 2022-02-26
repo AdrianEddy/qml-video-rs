@@ -13,6 +13,9 @@ pub enum QSGImageNode {}
 
 cpp! {{
     #include <private/qquickshadereffect_p.h>
+    #ifdef Q_OS_ANDROID
+    #   include <QJniEnvironment>
+    #endif
 }}
 
 #[derive(Default, QObject)]
@@ -209,7 +212,13 @@ cpp! {{
 impl QQuickItem for MDKVideoItem {
     fn component_complete(&mut self) {
         let obj = self.get_cpp_object();
-        cpp!(unsafe [obj as "QQuickItem *"] { obj->setFlag(QQuickItem::ItemHasContents); });
+        cpp!(unsafe [obj as "QQuickItem *"] {
+            obj->setFlag(QQuickItem::ItemHasContents);
+
+            #ifdef Q_OS_ANDROID
+                SetGlobalOption("jvm", QJniEnvironment::javaVM());
+            #endif
+        });
     }
     fn release_resources(&mut self) {
         let player = &self.m_player;

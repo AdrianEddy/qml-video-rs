@@ -103,9 +103,15 @@ impl MDKPlayerWrapper {
     pub fn set_log_handler<F: Fn(i32, String) + 'static>(cb: F) {
         let func: Box<dyn Fn(i32, String)> = Box::new(cb);
         let cb_ptr = Box::into_raw(func);
+
+        #[cfg(target_os = "android")]
+        type TextPtr = *const u8;
+        #[cfg(not(target_os = "android"))]
+        type TextPtr = *mut i8;
+
         cpp!(unsafe [cb_ptr as "TraitObject2"] {
             setLogHandler([cb_ptr](LogLevel level, const char *text) {
-                rust!(Rust_MDKPlayer_logHandler [cb_ptr: *mut dyn FnMut(i32, String) as "TraitObject2", level: i32 as "int", text: *mut i8 as "const char *"] {
+                rust!(Rust_MDKPlayer_logHandler [cb_ptr: *mut dyn FnMut(i32, String) as "TraitObject2", level: i32 as "int", text: TextPtr as "const char *"] {
                     let text = unsafe { std::ffi::CStr::from_ptr(text) }.to_string_lossy().to_string();
                     
                     let mut cb = unsafe { Box::from_raw(cb_ptr) };
