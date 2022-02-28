@@ -279,6 +279,9 @@ void MDKPlayer::sync(QSize newSize, bool force) {
         newSize = QSize(32, 32);
 
     m_size = newSize;
+
+    if (m_gpuProcessCleanup) m_gpuProcessCleanup();
+
     releaseResources();
     auto tex = createTexture(m_player.get(), m_size);
     if (!tex)
@@ -292,7 +295,6 @@ void MDKPlayer::sync(QSize newSize, bool force) {
     m_node->setRect(0, 0, m_item->width(), m_item->height());
     m_player->setVideoSurfaceSize(m_size.width(), m_size.height());
 
-    if (m_gpuProcessCleanup) m_gpuProcessCleanup();
     if (m_gpuProcessInit) m_gpuProcessingInited = m_gpuProcessInit(m_size, m_item->size());
 }
 
@@ -504,9 +506,6 @@ QSGDefaultRenderContext *MDKPlayer::rhiContext() {
 }
 QRhiTexture *MDKPlayer::rhiTexture() {
     return m_texture;
-}
-QRhiTexture *MDKPlayer::rhiTexture2() {
-    return m_texture2;
 }
 QRhiTextureRenderTarget *MDKPlayer::rhiRenderTarget() {
     return m_rt;
