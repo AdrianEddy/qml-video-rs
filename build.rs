@@ -78,6 +78,14 @@ fn main() {
     } else {
         panic!("Unable to download or extract mdk-sdk. Please make sure you have 7z in PATH or download mdk manually from https://sourceforge.net/projects/mdk-sdk/ and extract to {}", env::var("OUT_DIR").unwrap());
     }
+
+    let vulkan_sdk = env::var("VULKAN_SDK");
+    if let Ok(sdk) = vulkan_sdk {
+        if !sdk.is_empty() {
+            config.include(format!("{}/Include", sdk));
+        }
+    }
+
     config
         .include(&qt_include_path)
         .build("src/lib.rs");
