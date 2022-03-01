@@ -218,7 +218,9 @@ void MDKPlayer::windowBeforeRendering() {
     auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
     auto cb = context->currentFrameCommandBuffer();
 
-    if (m_rt) {
+    bool doRenderPass = m_rt && m_window->rendererInterface()->graphicsApi() != QSGRendererInterface::MetalRhi;
+
+    if (doRenderPass) {
         QRhiResourceUpdateBatch *u = context->rhi()->nextResourceUpdateBatch();
         cb->beginPass(m_rt, QColor(Qt::black), { 1.0f, 0 }, u, QRhiCommandBuffer::ExternalContent);
     }
@@ -227,7 +229,7 @@ void MDKPlayer::windowBeforeRendering() {
     double timestamp = m_player->renderVideo(); 
     cb->endExternal();
 
-    if (m_rt) {
+    if (doRenderPass) {
         cb->endPass();
     }
 
