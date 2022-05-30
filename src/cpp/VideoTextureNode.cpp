@@ -46,7 +46,7 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
             player->setRenderAPI(&ra);
             auto tex = GLuint(m_texture->nativeTexture().object);
             if (tex)
-                return QNativeInterface::QSGOpenGLTexture::fromNative(tex, m_window, size);
+                return QNativeInterface::QSGOpenGLTexture::fromNative(tex, m_window, size, QQuickWindow::TextureHasAlphaChannel);
 #endif // if QT_CONFIG(opengl)
         } break;
         case QSGRendererInterface::MetalRhi: {
@@ -61,7 +61,7 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
             ra.cmdQueue = rif->getResource(m_window, QSGRendererInterface::CommandQueueResource);
             player->setRenderAPI(&ra);
             if (ra.texture)
-                return QNativeInterface::QSGMetalTexture::fromNative((__bridge id<MTLTexture>)ra.texture, m_window, size);
+                return QNativeInterface::QSGMetalTexture::fromNative((__bridge id<MTLTexture>)ra.texture, m_window, size, QQuickWindow::TextureHasAlphaChannel);
 #endif // (__APPLE__+0)
         } break;
         case QSGRendererInterface::Direct3D11Rhi: {
@@ -71,7 +71,7 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
             ra.rtv = reinterpret_cast<ID3D11DeviceChild*>(quintptr(m_texture->nativeTexture().object));
             player->setRenderAPI(&ra);
             if (ra.rtv)
-                return QNativeInterface::QSGD3D11Texture::fromNative(ra.rtv, m_window, size);
+                return QNativeInterface::QSGD3D11Texture::fromNative(ra.rtv, m_window, size, QQuickWindow::TextureHasAlphaChannel);
 #endif // (_WIN32)
         } break;
         case QSGRendererInterface::VulkanRhi: {
@@ -98,7 +98,7 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
             };
             player->setRenderAPI(&ra);
             if (ra.rt)
-                return QNativeInterface::QSGVulkanTexture::fromNative(ra.rt, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_window, size);
+                return QNativeInterface::QSGVulkanTexture::fromNative(ra.rt, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_window, size, QQuickWindow::TextureHasAlphaChannel);
 #else
             qDebug2("VideoTextureNodePriv::createTexture") << "Vulkan support not compiled";
 #endif // (VK_VERSION_1_0+0) && QT_CONFIG(vulkan)
