@@ -30,7 +30,7 @@ pub struct MDKVideoItem {
     pub playingChanged: qt_signal!(),
 
     pub backgroundColor: qt_property!(QColor; WRITE setBackgroundColor READ getBackgroundColor),
-    pub rotation: qt_property!(i32; WRITE setRotation READ getRotation),
+    pub videoRotation: qt_property!(i32; WRITE setRotation READ getRotation),
     pub playbackRate: qt_property!(f32; WRITE setPlaybackRate READ getPlaybackRate),
 
     pub currentFrame:        qt_property!(i64; WRITE setCurrentFrame NOTIFY currentFrameChanged),
