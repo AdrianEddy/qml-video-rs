@@ -16,7 +16,7 @@ MDKPlayer::MDKPlayer() { }
 
 void MDKPlayer::initPlayer() {
     m_player = std::make_unique<mdk::Player>();
-    
+
     QString overrideDecoders = QString(qgetenv("MDK_DECODERS")).trimmed();
 
     if (!overrideDecoders.isEmpty()) {
@@ -59,7 +59,7 @@ void MDKPlayer::destroyPlayer() {
     m_firstFrameLoaded = false;
     if (m_connectionBeforeRendering) QObject::disconnect(m_connectionBeforeRendering);
     if (m_connectionScreenChanged) QObject::disconnect(m_connectionScreenChanged);
-    
+
     if (m_player) {
         stop();
         m_player->setRenderCallback(nullptr);
@@ -86,7 +86,7 @@ void MDKPlayer::setUrl(const QUrl &url) {
     }
     destroyPlayer();
     initPlayer();
-    
+
     QString path = url.toLocalFile();
     m_player->setMedia(qUtf8Printable(path));
     m_player->prepare();
@@ -139,25 +139,25 @@ void MDKPlayer::setupPlayer() {
 
     m_player->onStateChanged([this](mdk::State state) {
         // qDebug2("m_player->onStateChanged") <<
-        //     QString(state == mdk::State::NotRunning?  "NotRunning"  : "") +       
-        //     QString(state == mdk::State::Running?     "Running"     : "") +       
+        //     QString(state == mdk::State::NotRunning?  "NotRunning"  : "") +
+        //     QString(state == mdk::State::Running?     "Running"     : "") +
         //     QString(state == mdk::State::Paused?      "Paused"      : "");
-        
+
         QMetaObject::invokeMethod(m_item, "stateChanged", Q_ARG(int, int(state)));
     });
-    
+
     m_player->onMediaStatusChanged([this](mdk::MediaStatus status) -> bool {
-        
+
         // qDebug2("m_player->onMediaStatusChanged") <<
-        //     QString(status & mdk::MediaStatus::Unloaded?  "Unloaded | "  : "") +       
-        //     QString(status & mdk::MediaStatus::Loading?   "Loading | "   : "") +    
-        //     QString(status & mdk::MediaStatus::Loaded?    "Loaded | "    : "") +  
-        //     QString(status & mdk::MediaStatus::Prepared?  "Prepared | "  : "") +      
-        //     QString(status & mdk::MediaStatus::Stalled?   "Stalled | "   : "") +    
-        //     QString(status & mdk::MediaStatus::Buffering? "Buffering | " : "") +        
-        //     QString(status & mdk::MediaStatus::Buffered?  "Buffered | "  : "") +      
-        //     QString(status & mdk::MediaStatus::End?       "End | "       : "") +    
-        //     QString(status & mdk::MediaStatus::Seeking?   "Seeking | "   : "") +     
+        //     QString(status & mdk::MediaStatus::Unloaded?  "Unloaded | "  : "") +
+        //     QString(status & mdk::MediaStatus::Loading?   "Loading | "   : "") +
+        //     QString(status & mdk::MediaStatus::Loaded?    "Loaded | "    : "") +
+        //     QString(status & mdk::MediaStatus::Prepared?  "Prepared | "  : "") +
+        //     QString(status & mdk::MediaStatus::Stalled?   "Stalled | "   : "") +
+        //     QString(status & mdk::MediaStatus::Buffering? "Buffering | " : "") +
+        //     QString(status & mdk::MediaStatus::Buffered?  "Buffered | "  : "") +
+        //     QString(status & mdk::MediaStatus::End?       "End | "       : "") +
+        //     QString(status & mdk::MediaStatus::Seeking?   "Seeking | "   : "") +
         //     QString(status & mdk::MediaStatus::Invalid?   "Invalid | "   : "");
 
         if (!m_videoLoaded && (status & mdk::MediaStatus::Loaded) && (status & mdk::MediaStatus::Prepared)) {
@@ -181,15 +181,15 @@ void MDKPlayer::setupPlayer() {
                     m_duration *= m_fps / m_overrideFps;
                     fps = m_overrideFps;
                 }
-                
+
                 QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, m_duration), Q_ARG(qlonglong, v.frames), Q_ARG(double, fps), Q_ARG(uint, v.codec.width), Q_ARG(uint, v.codec.height));
             }
             m_player->setLoop(9999999);
             m_videoLoaded = true;
 
-            if (!m_connectionBeforeRendering) 
+            if (!m_connectionBeforeRendering)
                 m_connectionBeforeRendering = QObject::connect(m_window, &QQuickWindow::beforeRendering, [this] { this->windowBeforeRendering(); });
-            if (!m_connectionScreenChanged) 
+            if (!m_connectionScreenChanged)
                 m_connectionScreenChanged = QObject::connect(m_window, &QQuickWindow::screenChanged, [this](QScreen *) { m_item->update(); });
         }
         if (status & mdk::MediaStatus::Invalid) {
@@ -226,7 +226,7 @@ void MDKPlayer::windowBeforeRendering() {
     }
 
     cb->beginExternal();
-    double timestamp = m_player->renderVideo(); 
+    double timestamp = m_player->renderVideo();
     cb->endExternal();
 
     if (doRenderPass) {
@@ -262,7 +262,7 @@ void MDKPlayer::windowBeforeRendering() {
 
     if (m_renderedPosition != position)
         m_renderedReturnCount = 0;
-    
+
     m_renderedPosition = position;
 
     QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, timestamp * 1000.0));
@@ -326,9 +326,9 @@ void MDKPlayer::seekToTimestamp(float timestampMs, bool keyframe) {
 
 void MDKPlayer::seekToFrame(int64_t frame, int64_t currentFrame) {
     if (!m_videoLoaded || !m_player) return;
-    
+
     auto delta = frame - currentFrame;
-    if (delta > 0 && delta < 10) {
+    if (delta >= -10 && delta <= 10) {
         m_player->seek(delta, mdk::SeekFlag::FromNow | mdk::SeekFlag::Frame);
     } else {
         auto md = m_player->mediaInfo();
@@ -357,7 +357,7 @@ void MDKPlayer::setRotation(int v) {
 }
 int MDKPlayer::getRotation() {
     if (!m_videoLoaded || !m_player) return 0;
-    
+
     auto md = m_player->mediaInfo();
     if (!md.video.empty()) {
         return md.video[0].rotation;
@@ -371,7 +371,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
     player->setDecoders(MediaType::Video, { "FFmpeg" });
 
     player->setMedia(m_player->url());
-    
+
     player->setDecoders(MediaType::Audio, { });
     player->onSync([] { return DBL_MAX; });
 
@@ -388,7 +388,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             printf("error occured!\n");
             return 0;
         }
-        
+
         auto timestamp_ms = v.timestamp() * 1000.0;
 
         if (timestamp_ms >= ranges[*range_id].second) {
@@ -407,7 +407,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
         auto md = m_processingPlayers[id]->mediaInfo();
         if (!md.video.empty()) {
             auto vmd = md.video[0];
-           
+
             auto frame_num = std::ceil(std::round(v.timestamp() * vmd.codec.frame_rate * 100) / 100.0);
 
             auto vscaled = v.to(yuv? mdk::PixelFormat::YUV420P : mdk::PixelFormat::RGBA, width, height);

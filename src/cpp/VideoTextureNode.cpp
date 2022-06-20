@@ -138,7 +138,7 @@ QImage VideoTextureNodePriv::toImage(bool normalized) {
 
     if (normalized && rhi->isYUpInFramebuffer())
         ret.mirror();
-    
+
     return ret;
 }
 

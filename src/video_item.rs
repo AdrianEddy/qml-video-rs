@@ -67,7 +67,7 @@ pub struct MDKVideoItem {
     pub frameRendered: qt_method!(fn(&mut self, timestamp: f64)),
     pub videoLoaded:   qt_method!(fn(&mut self, duration: f64, frameCount: i64, frameRate: f64, width: u32, height: u32)),
     pub stateChanged:  qt_method!(fn(&mut self, state: i32)),
-    
+
     pub surfaceSizeUpdated: qt_method!(fn(&mut self, width: u32, height: u32)),
     pub setPlaybackRange: qt_method!(fn(&mut self, from_ms: i64, to_ms: i64)),
 
@@ -136,7 +136,7 @@ impl MDKVideoItem {
         self.frameRate    = (frameRate * 10000.0).round() / 10000.0;
         self.videoWidth   = width;
         self.videoHeight  = height;
-        
+
         self.metadataChanged();
     }
     fn stateChanged(&mut self, state: i32) {
@@ -165,7 +165,7 @@ impl MDKVideoItem {
         self.metadataChanged();
         self.forceRedraw();
     }
-    
+
     pub fn setPlaybackRange(&mut self, from_ms: i64, to_ms: i64) {
         self.m_player.set_playback_range(from_ms, to_ms);
     }
@@ -200,7 +200,7 @@ cpp! {{
         uint64_t bitsSize = img.sizeInBytes();
         return rust!(Rust_MDKPlayerItem_processPixels [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", timestamp: f64 as "double", width: u32 as "uint32_t", height: u32 as "uint32_t", stride: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] -> QImage as "QImage" {
             let slice = unsafe { std::slice::from_raw_parts_mut(bits, bitsSize as usize) };
-            
+
             let mut vid_item = MDKVideoItem::get_from_cpp(item);
             let mut vid_item = unsafe { &mut *vid_item.as_ptr() }; // vid_item.borrow_mut()
 
@@ -243,14 +243,14 @@ impl QQuickItem for MDKVideoItem {
                 let item = self.get_cpp_object();
                 let player = &self.m_player;
                 let (w, h) = (self.surfaceWidth, self.surfaceHeight);
-                
+
                 cpp!(unsafe [image_node as "QSGImageNode**", item as "QQuickItem*", player as "MDKPlayerWrapper*", w as "uint32_t", h as "uint32_t"] {
                     if (!item) return;
                     if (!*image_node) {
                         *image_node = item->window()->createImageNode();
                         player->mdkplayer->setupNode(*image_node, item, processPixelsCb);
                     }
-                    
+
                     QSize newSize = QSizeF(item->size() * item->window()->effectiveDevicePixelRatio()).toSize();
                     if (w != 0 && h != 0) {
                         newSize = QSize(w, h);

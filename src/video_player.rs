@@ -25,7 +25,7 @@ impl MDKPlayerWrapper {
             self->mdkplayer->setFrameRate(fps);
         })
     }
-    
+
     pub fn seek_to_timestamp(&mut self, timestamp: f64) {
         cpp!(unsafe [self as "MDKPlayerWrapper *", timestamp as "double"] {
             self->mdkplayer->seekToTimestamp(timestamp);
@@ -48,13 +48,13 @@ impl MDKPlayerWrapper {
             self->mdkplayer->setBackgroundColor(color);
         })
     }
-    
+
     pub fn get_background_color(&self) -> QColor {
         cpp!(unsafe [self as "MDKPlayerWrapper *"] -> QColor as "QColor" {
             return self->mdkplayer->getBackgroundColor();
         })
     }
-    
+
     pub fn set_playback_rate(&mut self, rate: f32) {
         cpp!(unsafe [self as "MDKPlayerWrapper *", rate as "float"] {
             self->mdkplayer->setPlaybackRate(rate);
@@ -71,7 +71,7 @@ impl MDKPlayerWrapper {
             self->mdkplayer->setMuted(v);
         })
     }
-    
+
     pub fn set_rotation(&self, v: i32) {
         cpp!(unsafe [self as "MDKPlayerWrapper *", v as "int"] {
             return self->mdkplayer->setRotation(v);
@@ -113,7 +113,7 @@ impl MDKPlayerWrapper {
             setLogHandler([cb_ptr](LogLevel level, const char *text) {
                 rust!(Rust_MDKPlayer_logHandler [cb_ptr: *mut dyn FnMut(i32, String) as "TraitObject2", level: i32 as "int", text: TextPtr as "const char *"] {
                     let text = unsafe { std::ffi::CStr::from_ptr(text) }.to_string_lossy().to_string();
-                    
+
                     let mut cb = unsafe { Box::from_raw(cb_ptr) };
 
                     cb(level, text);
@@ -124,7 +124,7 @@ impl MDKPlayerWrapper {
     }
 
     pub fn start_processing<F: FnMut(i32, f64, u32, u32, &mut [u8]) + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
-        
+
         // assert!(to_ms > from_ms);
         let func: Box<dyn FnMut(i32, f64, u32, u32, &mut [u8])> = Box::new(cb);
 
@@ -137,7 +137,7 @@ impl MDKPlayerWrapper {
             self->mdkplayer->initProcessingPlayer(id, width, height, yuv, ranges, [cb_ptr](int frame, double timestamp, int width, int height, const uint8_t *bits, uint64_t bitsSize) {
                 rust!(Rust_MDKPlayer_videoProcess [cb_ptr: *mut dyn FnMut(i32, f64, u32, u32, &mut [u8]) as "TraitObject2", frame: i32 as "int", timestamp: f64 as "double", width: u32 as "uint32_t", height: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] {
                     let pixels = unsafe { std::slice::from_raw_parts_mut(bits, bitsSize as usize) };
-                    
+
                     let mut cb = unsafe { Box::from_raw(cb_ptr) };
 
                     cb(frame, timestamp, width, height, pixels);

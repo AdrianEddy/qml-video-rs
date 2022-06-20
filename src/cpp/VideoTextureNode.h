@@ -44,11 +44,11 @@ public:
     QRhiTexture *m_texture{nullptr};
     QRhiTextureRenderTarget *m_rt{nullptr};
     QRhiRenderPassDescriptor *m_rtRp{nullptr};
-    
+
     QSGImageNode::TextureCoordinatesTransformMode m_tx{QSGImageNode::TextureCoordinatesTransformFlag::NoTransform};
     QQuickWindow *m_window{nullptr};
     QQuickItem *m_item{nullptr};
-    
+
     QMatrix4x4 m_proj;
     QSize m_size;
 };
