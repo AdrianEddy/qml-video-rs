@@ -501,6 +501,9 @@ void MDKPlayer::setupGpuCompute(std::function<bool(QSize texSize, QSizeF itemSiz
 }
 void MDKPlayer::cleanupGpuCompute() {
     m_gpuProcessingInited = false;
+    qDebug() << "waiting 100ms for cleanup";
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    qDebug() << "cleanupGpuCompute";
     if (m_gpuProcessCleanup) m_gpuProcessCleanup();
 }
 QSGDefaultRenderContext *MDKPlayer::rhiContext() {
