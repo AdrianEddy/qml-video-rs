@@ -1,6 +1,7 @@
 #include "MDKPlayer.h"
 #include <map>
 #include <string>
+#include <thread>
 
 #include "mdk/Player.h"
 #include "mdk/VideoFrame.h"
