@@ -11,6 +11,10 @@ qttypes     = { version = "*", git = "https://github.com/AdrianEddy/qmetaobject-
 cstr = "0.2"
 cpp = "0.5"
 
+[features]
+default = ["mdk-nightly"]
+mdk-nightly = []
+
 [build-dependencies]
 cpp_build = "0.5"
 ureq = "2.4"

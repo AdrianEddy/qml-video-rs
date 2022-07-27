@@ -39,16 +39,21 @@ fn main() {
     private_include("QtQuick");
     private_include("QtQml");
 
-    let sdk: HashMap<&str, (&str, &str, &str, &str)> = vec![
-        ("windows",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-windows-desktop-vs2022.7z?viasf=1", "lib/x64/",           "mdk.lib",    "include/")),
-        ("linux",    ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-linux.tar.xz?viasf=1",              "lib/amd64/",         "libmdk.so",  "include/")),
-        ("macos",    ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-macOS.tar.xz?viasf=1",              "lib/mdk.framework/", "mdk",        "include/")),
-        ("android",  ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-android.7z?viasf=1",                "lib/arm64-v8a/",     "libmdk.so",  "include/")),
-        ("ios",      ("https://master.dl.sourceforge.net/project/mdk-sdk/nightly/mdk-sdk-iOS.tar.xz?viasf=1",                "lib/mdk.framework/", "mdk",        "include/")),
+    #[cfg(feature = "mdk-nightly")]
+    let nightly = "nightly/";
+    #[cfg(not(feature = "mdk-nightly"))]
+    let nightly = "";
+
+    let sdk: HashMap<&str, (String, &str, &str, &str)> = vec![
+        ("windows",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-windows-desktop-vs2022.7z?viasf=1", nightly), "lib/x64/",           "mdk.lib",    "include/")),
+        ("linux",    (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-linux.tar.xz?viasf=1", nightly),              "lib/amd64/",         "libmdk.so",  "include/")),
+        ("macos",    (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-macOS.tar.xz?viasf=1", nightly),              "lib/mdk.framework/", "mdk",        "include/")),
+        ("android",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-android.7z?viasf=1", nightly),                "lib/arm64-v8a/",     "libmdk.so",  "include/")),
+        ("ios",      (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-iOS.tar.xz?viasf=1", nightly),                "lib/mdk.framework/", "mdk",        "include/")),
     ].into_iter().collect();
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-    let entry = sdk[target_os.as_str()];
+    let entry = &sdk[target_os.as_str()];
 
     if let Ok(path) = download_and_extract(&entry.0, &format!("{}{}", entry.1, entry.2)) {
         if target_os == "macos" || target_os == "ios" {
@@ -65,6 +70,7 @@ fn main() {
         if target_os == "windows" {
             std::fs::copy(format!("{}/bin/x64/mdk.dll", path), format!("{}/../../../mdk.dll", env::var("OUT_DIR").unwrap())).unwrap();
             std::fs::copy(format!("{}/bin/x64/ffmpeg-5.dll", path), format!("{}/../../../ffmpeg-5.dll", env::var("OUT_DIR").unwrap())).unwrap();
+            let _ = std::fs::copy(format!("{}/bin/x64/mdk-braw.dll", path), format!("{}/../../../mdk-braw.dll", env::var("OUT_DIR").unwrap()));
         }
         if target_os == "android" {
             std::fs::copy(format!("{}/lib/arm64-v8a/libmdk.so", path), format!("{}/../../../libmdk.so", env::var("OUT_DIR").unwrap())).unwrap();
@@ -74,6 +80,7 @@ fn main() {
         if target_os == "linux" {
             std::fs::copy(format!("{}/lib/amd64/libffmpeg.so.5", path), format!("{}/../../../libffmpeg.so.5", env::var("OUT_DIR").unwrap())).unwrap();
             std::fs::copy(format!("{}/lib/amd64/libmdk.so.0", path), format!("{}/../../../libmdk.so.0", env::var("OUT_DIR").unwrap())).unwrap();
+            let _ = std::fs::copy(format!("{}/lib/amd64/libmdk-braw.so", path), format!("{}/../../../libmdk-braw.so", env::var("OUT_DIR").unwrap()));
         }
         config.include(format!("{}{}", path, entry.3));
     } else {
