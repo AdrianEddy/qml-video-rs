@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 #include <thread>
+#include <QTimer>
 
 #include "mdk/Player.h"
 #include "mdk/VideoFrame.h"
@@ -45,6 +46,7 @@ void MDKPlayer::initPlayer() {
         "MMAL",
         "VAAPI",
     #endif
+        //"BRAW:gpu=auto:copy=0",
         "FFmpeg"});
     }
 
@@ -67,7 +69,8 @@ void MDKPlayer::destroyPlayer() {
         m_player->onMediaStatusChanged(nullptr);
         m_player->onEvent(nullptr);
         m_player->onFrame<mdk::VideoFrame>(nullptr);
-        m_player.reset();
+        auto ptr = m_player.release();
+        QTimer::singleShot(1000, [ptr] { delete ptr; }); // delete later
     }
 }
 
@@ -312,6 +315,7 @@ void MDKPlayer::pause() {
 void MDKPlayer::stop() {
     if (!m_videoLoaded || !m_player) return;
     m_player->set(mdk::PlaybackState::Stopped);
+    m_player->waitFor(mdk::PlaybackState::Stopped);
 }
 void MDKPlayer::setFrameRate(float fps) {
     if (!m_player) return;
@@ -371,10 +375,14 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
     auto player = m_processingPlayers[id].get();
     player->setDecoders(MediaType::Video, { "FFmpeg" });
 
-    player->setMedia(m_player->url());
+    player->setMedia(m_player? m_player->url() : qUtf8Printable(m_pendingUrl.toLocalFile()));
 
     player->setDecoders(MediaType::Audio, { });
     player->onSync([] { return DBL_MAX; });
+
+    if (ranges.empty()) {
+        const_cast<std::vector<std::pair<uint64_t, uint64_t>> &>(ranges).push_back({ 0, UINT64_MAX });
+    }
 
     auto range_id = new uint(0);
 
@@ -398,7 +406,8 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
                 m_processingPlayers[id]->seek(ranges[*range_id].first, mdk::SeekFlag::FromStart);
                 return 0;
             }
-            m_processingPlayers[id]->set(State::Stopped);
+            m_processingPlayers[id]->set(mdk::PlaybackState::Paused);
+            m_processingPlayers[id]->waitFor(mdk::PlaybackState::Paused);
             cb(-1, -1.0, 0, 0, 0, 0);
             m_processingPlayers[id].reset();
             delete range_id;
@@ -410,6 +419,38 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             auto vmd = md.video[0];
 
             auto frame_num = std::ceil(std::round(v.timestamp() * vmd.codec.frame_rate * 100) / 100.0);
+
+            if (width == 0) const_cast<uint64_t&>(width) = v.width();
+            if (height == 0) const_cast<uint64_t&>(height) = v.height();
+
+            /*switch (v.format()) {
+                case mdk::PixelFormat::YUV420P:     qDebug() << "YUV420P";     break;
+                case mdk::PixelFormat::NV12:        qDebug() << "NV12";        break;
+                case mdk::PixelFormat::YUV422P:     qDebug() << "YUV422P";     break;
+                case mdk::PixelFormat::YUV444P:     qDebug() << "YUV444P";     break;
+                case mdk::PixelFormat::P010LE:      qDebug() << "P010LE";      break;
+                case mdk::PixelFormat::P016LE:      qDebug() << "P016LE";      break;
+                case mdk::PixelFormat::YUV420P10LE: qDebug() << "YUV420P10LE"; break;
+                case mdk::PixelFormat::UYVY422:     qDebug() << "UYVY422";     break;
+                case mdk::PixelFormat::RGB24:       qDebug() << "RGB24";       break;
+                case mdk::PixelFormat::RGBA:        qDebug() << "RGBA";        break;
+                case mdk::PixelFormat::RGBX:        qDebug() << "RGBX";        break;
+                case mdk::PixelFormat::BGRA:        qDebug() << "BGRA";        break;
+                case mdk::PixelFormat::BGRX:        qDebug() << "BGRX";        break;
+                case mdk::PixelFormat::RGB565LE:    qDebug() << "RGB565LE";    break;
+                case mdk::PixelFormat::RGB48LE:     qDebug() << "RGB48LE";     break;
+                case mdk::PixelFormat::GBRP:        qDebug() << "GBRP";        break;
+                case mdk::PixelFormat::GBRP10LE:    qDebug() << "GBRP10LE";    break;
+                case mdk::PixelFormat::XYZ12LE:     qDebug() << "XYZ12LE";     break;
+                case mdk::PixelFormat::YUVA420P:    qDebug() << "YUVA420P";    break;
+                case mdk::PixelFormat::BC1:         qDebug() << "BC1";         break;
+                case mdk::PixelFormat::BC3:         qDebug() << "BC3";         break;
+                case mdk::PixelFormat::RGBA64:      qDebug() << "RGBA64";      break;
+                case mdk::PixelFormat::BGRA64:      qDebug() << "BGRA64";      break;
+                case mdk::PixelFormat::RGBP16:      qDebug() << "RGBP16";      break;
+                case mdk::PixelFormat::RGBPF32:     qDebug() << "RGBPF32";     break;
+                case mdk::PixelFormat::BGRAF32:     qDebug() << "BGRAF32";     break;
+            }*/
 
             auto vscaled = v.to(yuv? mdk::PixelFormat::YUV420P : mdk::PixelFormat::RGBA, width, height);
             auto ptr = vscaled.bufferData();
