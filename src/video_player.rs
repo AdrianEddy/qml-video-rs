@@ -37,9 +37,9 @@ impl MDKPlayerWrapper {
         })
     }
 
-    pub fn set_url(&mut self, url: QUrl) {
-        cpp!(unsafe [self as "MDKPlayerWrapper *", url as "QUrl"] {
-            self->mdkplayer->setUrl(url);
+    pub fn set_url(&mut self, url: QUrl, custom_decoder: QString) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *", url as "QUrl", custom_decoder as "QString"] {
+            self->mdkplayer->setUrl(url, custom_decoder);
         })
     }
 

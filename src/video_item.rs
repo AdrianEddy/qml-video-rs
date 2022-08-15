@@ -43,8 +43,8 @@ pub struct MDKVideoItem {
 
     pub setFrameRate: qt_method!(fn(&mut self, fps: f64)),
 
-    pub url:    qt_property!(QUrl; WRITE setUrl),
-    pub setUrl: qt_method!(fn(&mut self, url: QUrl)),
+    pub url:    qt_property!(QUrl; CONST),
+    pub setUrl: qt_method!(fn(&mut self, url: QUrl, custom_decoder: QString)),
 
     pub forceRedraw: qt_method!(fn(&mut self)),
 
@@ -104,12 +104,12 @@ impl MDKVideoItem {
     pub fn setRotation(&mut self, v: i32) { self.m_player.set_rotation(v); self.forceRedraw(); }
     pub fn getRotation(&self) -> i32 { self.m_player.get_rotation() }
 
-    pub fn setUrl(&mut self, url: QUrl) {
+    pub fn setUrl(&mut self, url: QUrl, custom_decoder: QString) {
         let prev_muted = self.getMuted();
         self.playing = false;
         self.playingChanged();
         self.url = url.clone();
-        self.m_player.set_url(url);
+        self.m_player.set_url(url, custom_decoder);
         self.setMuted(prev_muted);
         self.forceRedraw();
     }

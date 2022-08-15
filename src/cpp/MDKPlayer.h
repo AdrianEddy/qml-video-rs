@@ -26,7 +26,7 @@ public:
 
     ~MDKPlayer();
 
-    void setUrl(const QUrl &url);
+    void setUrl(const QUrl &url, const QString &customDecoder);
 
     void setBackgroundColor(const QColor &color);
 
@@ -105,6 +105,7 @@ private:
     QSGImageNode *m_node{nullptr};
     QColor m_bgColor;
     QUrl m_pendingUrl;
+    QString m_pendingCustomDecoder;
 };
 
 // Simple wrapper class to workaround class alignment issues when using it from Rust

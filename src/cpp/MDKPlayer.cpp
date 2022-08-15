@@ -46,7 +46,7 @@ void MDKPlayer::initPlayer() {
         "MMAL",
         "VAAPI",
     #endif
-        //"BRAW:gpu=auto:copy=0",
+        "BRAW:gpu=auto:scale=1920x1080",
         "FFmpeg"});
     }
 
@@ -82,14 +82,19 @@ MDKPlayer::~MDKPlayer() {
     destroyPlayer();
 }
 
-void MDKPlayer::setUrl(const QUrl &url) {
+void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
     m_overrideFps = 0.0;
     if (!m_item) {
         m_pendingUrl = url;
+        m_pendingCustomDecoder = customDecoder;
         return;
     }
     destroyPlayer();
     initPlayer();
+    if (!customDecoder.isEmpty()) {
+        qDebug2("setUrl") << "MDK decoder: " << customDecoder;
+        m_player->setDecoders(mdk::MediaType::Video, { customDecoder.toStdString() });
+    }
 
     QString path = url.toLocalFile();
     m_player->setMedia(qUtf8Printable(path));
@@ -114,7 +119,7 @@ void MDKPlayer::setupNode(QSGImageNode *node, QQuickItem *item, ProcessPixelsCb 
     m_window = item->window();
     m_processPixels = processPixels;
     if (!m_pendingUrl.isEmpty()) {
-        setUrl(m_pendingUrl);
+        setUrl(m_pendingUrl, m_pendingCustomDecoder);
         m_pendingUrl = QUrl();
     }
 }
@@ -389,7 +394,12 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
     player->onFrame<mdk::VideoFrame>([cb, width, height, id, range_id, yuv, ranges, this](mdk::VideoFrame &v, int) {
         if (!v || v.timestamp() == mdk::TimestampEOS) { // AOT frame(1st frame, seek end 1st frame) is not valid, but format is valid. eof frame format is invalid
             cb(-1, -1.0, 0, 0, 0, 0);
-            m_processingPlayers[id].reset();
+            auto ptr = m_processingPlayers[id].release();
+            QTimer::singleShot(1, [ptr] {
+                ptr->set(mdk::PlaybackState::Stopped);
+                ptr->waitFor(mdk::PlaybackState::Stopped);
+                delete ptr;
+            });
             delete range_id;
             return 0;
         }
@@ -406,10 +416,15 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
                 m_processingPlayers[id]->seek(ranges[*range_id].first, mdk::SeekFlag::FromStart);
                 return 0;
             }
-            m_processingPlayers[id]->set(mdk::PlaybackState::Paused);
-            m_processingPlayers[id]->waitFor(mdk::PlaybackState::Paused);
+            auto ptr = m_processingPlayers[id].release();
+            ptr->set(mdk::PlaybackState::Paused);
+            ptr->waitFor(mdk::PlaybackState::Paused);
             cb(-1, -1.0, 0, 0, 0, 0);
-            m_processingPlayers[id].reset();
+            QTimer::singleShot(1, [ptr] {
+                ptr->set(mdk::PlaybackState::Stopped);
+                ptr->waitFor(mdk::PlaybackState::Stopped);
+                delete ptr;
+            });
             delete range_id;
             return 0;
         }
