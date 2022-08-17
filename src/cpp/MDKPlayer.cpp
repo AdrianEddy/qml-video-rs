@@ -91,12 +91,19 @@ void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
     }
     destroyPlayer();
     initPlayer();
+
+    QString additionalUrl;
     if (!customDecoder.isEmpty()) {
-        qDebug2("setUrl") << "MDK decoder: " << customDecoder;
-        m_player->setDecoders(mdk::MediaType::Video, { customDecoder.toStdString() });
+        qDebug2("setUrl") << "MDK decoder:" << customDecoder;
+        if (customDecoder.startsWith("FFmpeg:avformat_options=")) {
+            additionalUrl = "?mdkopt=avformat&" + customDecoder.mid(24);
+        } else {
+            m_player->setDecoders(mdk::MediaType::Video, { customDecoder.toStdString() });
+        }
     }
 
-    QString path = url.toLocalFile();
+    QString path = url.toLocalFile() + additionalUrl;
+    qDebug2("setUrl") << "Final path:" << path;
     m_player->setMedia(qUtf8Printable(path));
     m_player->prepare();
 }
@@ -471,7 +478,20 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             auto ptr = vscaled.bufferData();
             auto ptr_size = vscaled.bytesPerLine() * vscaled.height();
 
-            cb(frame_num, timestamp_ms, vscaled.width(), vscaled.height(), ptr, ptr_size);
+            if (!cb(frame_num, timestamp_ms, vscaled.width(), vscaled.height(), ptr, ptr_size)) {
+                // If cb returns false - stop the processing
+                auto pptr = m_processingPlayers[id].release();
+                pptr->set(mdk::PlaybackState::Paused);
+                pptr->waitFor(mdk::PlaybackState::Paused);
+                cb(-1, -1.0, 0, 0, 0, 0);
+                QTimer::singleShot(1, [pptr] {
+                    pptr->set(mdk::PlaybackState::Stopped);
+                    pptr->waitFor(mdk::PlaybackState::Stopped);
+                    delete pptr;
+                });
+                delete range_id;
+                return 0;
+            }
         }
         return 0;
     });

@@ -14,7 +14,7 @@
 #include "VideoTextureNode.h"
 
 typedef std::function<QImage(QQuickItem *item, uint32_t frame, double timestamp, const QImage &img)> ProcessPixelsCb;
-typedef std::function<void(int32_t frame, double timestamp, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize)> VideoProcessCb;
+typedef std::function<bool(int32_t frame, double timestamp, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize)> VideoProcessCb;
 
 namespace mdk { class Player; }
 
