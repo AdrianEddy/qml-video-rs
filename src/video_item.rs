@@ -54,13 +54,14 @@ pub struct MDKVideoItem {
     pub videoWidth: qt_property!(u32; NOTIFY metadataChanged),
     pub videoHeight: qt_property!(u32; NOTIFY metadataChanged),
 
-    pub surfaceWidth: qt_property!(u32; NOTIFY metadataChanged),
-    pub surfaceHeight: qt_property!(u32; NOTIFY metadataChanged),
+    pub surfaceWidth: qt_property!(u32; NOTIFY surfaceSizeChanged),
+    pub surfaceHeight: qt_property!(u32; NOTIFY surfaceSizeChanged),
 
     pub duration:   qt_property!(f64; NOTIFY metadataChanged),
     pub frameCount: qt_property!(i64; NOTIFY metadataChanged),
     pub frameRate:  qt_property!(f64; NOTIFY metadataChanged),
     pub metadataChanged: qt_signal!(),
+    pub surfaceSizeChanged: qt_signal!(),
 
     pub metadataLoaded: qt_signal!(md: QJsonObject),
 
@@ -162,7 +163,8 @@ impl MDKVideoItem {
     pub fn setSurfaceSize(&mut self, width: u32, height: u32) {
         self.surfaceWidth = width;
         self.surfaceHeight = height;
-        self.metadataChanged();
+
+        self.surfaceSizeChanged();
         self.forceRedraw();
     }
 

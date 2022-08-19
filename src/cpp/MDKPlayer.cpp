@@ -112,6 +112,7 @@ void MDKPlayer::setBackgroundColor(const QColor &color) {
     m_bgColor = color;
     if (m_player)
         m_player->setBackgroundColor(m_bgColor.redF(), m_bgColor.greenF(), m_bgColor.blueF(), m_bgColor.alphaF());
+    forceRedraw();
 }
 
 void MDKPlayer::setMuted(bool v) {
@@ -221,13 +222,14 @@ void MDKPlayer::setupPlayer() {
         // qDebug2("m_player->onFrame") << "frame" << track << frame.timestamp() << (int)frame.format() << frame.planeCount() << frame.bufferData(0);
         return 0;
     });*/
+
+    forceRedraw();
 }
 
 void MDKPlayer::windowBeforeRendering() {
     if (!m_videoLoaded || !m_player) return;
 
-    auto position = m_player->position();
-    if (m_renderedPosition == position && m_renderedReturnCount++ > 100) {
+    if (m_renderedPosition == m_playerPosition && m_renderedReturnCount++ > 100) {
         return;
     }
 
@@ -244,6 +246,8 @@ void MDKPlayer::windowBeforeRendering() {
     cb->beginExternal();
     double timestamp = m_player->renderVideo();
     cb->endExternal();
+
+    m_playerPosition = timestamp * 1000;
 
     if (doRenderPass) {
         cb->endPass();
@@ -276,10 +280,10 @@ void MDKPlayer::windowBeforeRendering() {
         }
     }
 
-    if (m_renderedPosition != position)
+    if (m_renderedPosition != m_playerPosition)
         m_renderedReturnCount = 0;
 
-    m_renderedPosition = position;
+    m_renderedPosition = m_playerPosition;
 
     QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, timestamp * 1000.0));
 }
@@ -319,10 +323,12 @@ void MDKPlayer::sync(QSize newSize, bool force) {
 void MDKPlayer::play() {
     if (!m_videoLoaded || !m_player) return;
     m_player->set(mdk::PlaybackState::Playing);
+    forceRedraw();
 }
 void MDKPlayer::pause() {
     if (!m_videoLoaded || !m_player) return;
     m_player->set(mdk::PlaybackState::Paused);
+    forceRedraw();
 }
 void MDKPlayer::stop() {
     if (!m_videoLoaded || !m_player) return;
@@ -339,6 +345,7 @@ void MDKPlayer::seekToTimestamp(float timestampMs, bool keyframe) {
     if (!m_videoLoaded || !m_player) return;
 
     m_player->seek(timestampMs, keyframe? mdk::SeekFlag::FromStart | mdk::SeekFlag::KeyFrame : mdk::SeekFlag::FromStart);
+    forceRedraw();
 }
 
 void MDKPlayer::seekToFrame(int64_t frame, int64_t currentFrame) {
@@ -354,6 +361,7 @@ void MDKPlayer::seekToFrame(int64_t frame, int64_t currentFrame) {
             seekToTimestamp((frame / v.codec.frame_rate) * 1000.0);
         }
     }
+    forceRedraw();
 }
 
 void MDKPlayer::setPlaybackRate(float rate) { m_playbackRate = rate; if (m_player) m_player->setPlaybackRate(rate); }
@@ -371,6 +379,7 @@ void MDKPlayer::setRotation(int v) {
     if (!m_videoLoaded || !m_player) return;
 
     m_player->rotate(v);
+    forceRedraw();
 }
 int MDKPlayer::getRotation() {
     if (!m_videoLoaded || !m_player) return 0;

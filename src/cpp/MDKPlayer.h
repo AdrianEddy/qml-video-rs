@@ -45,7 +45,7 @@ public:
     void windowBeforeRendering();
 
     void sync(QSize newSize, bool force = false);
-    void forceRedraw() { m_renderedPosition = -1; m_renderedReturnCount = 0; }
+    void forceRedraw() { m_renderedPosition = -1; m_playerPosition = 0; m_renderedReturnCount = 0; }
 
     void play();
     void pause();
@@ -101,6 +101,7 @@ private:
     double m_duration{0.0};
     float m_playbackRate{1.0};
     bool m_syncNext{false};
+    int64_t m_playerPosition{0};
 
     QSGImageNode *m_node{nullptr};
     QColor m_bgColor;
