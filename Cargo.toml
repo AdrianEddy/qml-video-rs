@@ -3,6 +3,8 @@ name = "qml-video-rs"
 version = "0.1.0"
 authors = ["Adrian <adrian.eddy@gmail.com>"]
 edition = "2021"
+description = "Video player component for QML using Qt6 and mdk-sdk"
+readme = "README.md"
 build = "build.rs"
 
 [dependencies]

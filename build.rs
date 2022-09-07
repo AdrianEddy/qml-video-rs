@@ -91,6 +91,7 @@ fn main() {
     if let Ok(sdk) = vulkan_sdk {
         if !sdk.is_empty() {
             config.include(format!("{}/Include", sdk));
+            config.include(format!("{}/include", sdk));
         }
     }
 
