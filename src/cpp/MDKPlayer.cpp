@@ -121,15 +121,21 @@ void MDKPlayer::setMuted(bool v) {
 }
 bool MDKPlayer::getMuted() { return m_player? m_player->isMute() : false; }
 
-void MDKPlayer::setupNode(QSGImageNode *node, QQuickItem *item, ProcessPixelsCb &&processPixels) {
+void MDKPlayer::setupNode(QSGImageNode *node, QQuickItem *item) {
     m_node = node;
     m_item = item;
     m_window = item->window();
-    m_processPixels = processPixels;
     if (!m_pendingUrl.isEmpty()) {
         setUrl(m_pendingUrl, m_pendingCustomDecoder);
         m_pendingUrl = QUrl();
     }
+}
+
+void MDKPlayer::setProcessPixelsCallback(ProcessPixelsCb &&cb) {
+    m_processPixels = cb;
+}
+void MDKPlayer::setProcessTextureCallback(ProcessTextureCb &&cb) {
+    m_processTexture = cb;
 }
 
 void MDKPlayer::setupPlayer() {
@@ -227,6 +233,8 @@ void MDKPlayer::setupPlayer() {
 }
 
 void MDKPlayer::windowBeforeRendering() {
+    // QElapsedTimer t; t.start();
+
     if (!m_videoLoaded || !m_player) return;
 
     if (m_renderedPosition == m_playerPosition && m_renderedReturnCount++ > 100) {
@@ -269,6 +277,51 @@ void MDKPlayer::windowBeforeRendering() {
                 qDebug2("MDKPlayer::windowBeforeRendering") << "Failed to run the GPU compute shader";
             }
         }
+        if (!m_videoLoaded || !m_player) return;
+        if (!processed && m_processTexture) {
+            uint64_t backend_id = 0;
+            uint64_t ptr1 = m_texture->nativeTexture().object;
+            uint64_t ptr2 = 0;
+            uint64_t ptr3 = 0;
+            uint64_t ptr4 = 0;
+
+            QSGRendererInterface *rif = m_window->rendererInterface();
+            switch (rif->graphicsApi()) {
+                case QSGRendererInterface::OpenGLRhi: {
+                    backend_id = 1;
+                    ptr2 = uint64_t(rif->getResource(m_window, QSGRendererInterface::OpenGLContextResource));
+                } break;
+                case QSGRendererInterface::MetalRhi: {
+                    backend_id = 2;
+                    ptr2 = uint64_t(rif->getResource(m_window, QSGRendererInterface::DeviceResource));
+                    ptr3 = uint64_t(rif->getResource(m_window, QSGRendererInterface::CommandQueueResource));
+                } break;
+                case QSGRendererInterface::Direct3D11Rhi: {
+                    backend_id = 3;
+                    ptr2 = uint64_t(rif->getResource(m_window, QSGRendererInterface::DeviceResource));
+                    ptr3 = uint64_t(rif->getResource(m_window, QSGRendererInterface::DeviceContextResource));
+                } break;
+                case QSGRendererInterface::VulkanRhi: {
+                    backend_id = 4;
+                    ptr2 = uint64_t(rif->getResource(m_window, QSGRendererInterface::DeviceResource));
+                    ptr3 = uint64_t(rif->getResource(m_window, QSGRendererInterface::CommandListResource));
+                    ptr4 = uint64_t(rif->getResource(m_window, QSGRendererInterface::PhysicalDeviceResource));
+                } break;
+                default: break;
+            }
+
+            processed = m_processTexture(m_item, frame, timestamp * 1000.0, m_size.width(), m_size.height(), backend_id, ptr1, ptr2, ptr3, ptr4);
+
+            // -------------- Readback workaround --------------
+            if (processed && rif->graphicsApi() == QSGRendererInterface::Direct3D11Rhi) {
+                if (!m_readbackResult) m_readbackResult = new QRhiReadbackResult();
+                QRhiResourceUpdateBatch *u = context->rhi()->nextResourceUpdateBatch();
+                u->readBackTexture({ m_workaroundTexture }, m_readbackResult);
+                cb->resourceUpdate(u);
+            }
+            // -------------- Readback workaround --------------
+        }
+
         if (!processed && m_processPixels) {
             auto img = toImage();
             if (!m_videoLoaded || !m_player) return;
@@ -284,6 +337,7 @@ void MDKPlayer::windowBeforeRendering() {
         m_renderedReturnCount = 0;
 
     m_renderedPosition = m_playerPosition;
+    // printf("render: %.3f\n", double(t.nsecsElapsed()) / 1000000.0);
 
     QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, timestamp * 1000.0));
 }

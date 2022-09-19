@@ -7,6 +7,7 @@ use qmetaobject::*;
 use crate::video_player::*;
 
 type ProcessPixelsCb = Box<dyn Fn(u32, f64, u32, u32, u32, &mut [u8]) -> (u32, u32, u32, *mut u8)>;
+type ProcessTextureCb = Box<dyn Fn(u32, f64, u32, u32, u32, u64, u64, u64, u64) -> bool>;
 type ResizeCb = Box<dyn Fn(u32, u32)>;
 
 pub enum QSGImageNode {}
@@ -77,12 +78,16 @@ pub struct MDKVideoItem {
     m_player: MDKPlayerWrapper,
 
     m_processPixelsCb: Option<ProcessPixelsCb>,
+    m_processTextureCb: Option<ProcessTextureCb>,
     m_resizeCb: Option<ResizeCb>
 }
 
 impl MDKVideoItem {
     pub fn onProcessPixels(&mut self, cb: ProcessPixelsCb) {
         self.m_processPixelsCb = Some(cb);
+    }
+    pub fn onProcessTexture(&mut self, cb: ProcessTextureCb) {
+        self.m_processTextureCb = Some(cb);
     }
     pub fn onResize(&mut self, cb: ResizeCb) {
         self.m_resizeCb = Some(cb);
@@ -159,6 +164,13 @@ impl MDKVideoItem {
             (width, height, stride, pixels.as_mut_ptr())
         }
     }
+    fn process_texture(&mut self, frame: u32, timestamp: f64, width: u32, height: u32, backend_id: u32, ptr1: u64, ptr2: u64, ptr3: u64, ptr4: u64) -> bool {
+        if let Some(ref mut proc) = self.m_processTextureCb {
+            proc(frame, timestamp, width, height, backend_id, ptr1, ptr2, ptr3, ptr4)
+        } else {
+            false
+        }
+    }
 
     pub fn setSurfaceSize(&mut self, width: u32, height: u32) {
         self.surfaceWidth = width;
@@ -209,6 +221,14 @@ cpp! {{
             qimage_from_parts(vid_item.process_pixels(frame, timestamp, width, height, stride, slice))
         });
     };
+    bool processTextureCb(QQuickItem *item, uint32_t frame, double timestamp, uint32_t width, uint32_t height, uint32_t backend_id, uint64_t ptr1, uint64_t ptr2, uint64_t ptr3, uint64_t ptr4) {
+        return rust!(Rust_MDKPlayerItem_processTexture [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", timestamp: f64 as "double", width: u32 as "uint32_t", height: u32 as "uint32_t", backend_id: u32 as "uint32_t", ptr1: u64 as "uint64_t", ptr2: u64 as "uint64_t", ptr3: u64 as "uint64_t", ptr4: u64 as "uint64_t"] -> bool as "bool" {
+            let mut vid_item = MDKVideoItem::get_from_cpp(item);
+            let mut vid_item = unsafe { &mut *vid_item.as_ptr() }; // vid_item.borrow_mut()
+
+            vid_item.process_texture(frame, timestamp, width, height, backend_id, ptr1, ptr2, ptr3, ptr4)
+        });
+    };
 }}
 
 impl QQuickItem for MDKVideoItem {
@@ -250,7 +270,9 @@ impl QQuickItem for MDKVideoItem {
                     if (!item) return;
                     if (!*image_node) {
                         *image_node = item->window()->createImageNode();
-                        player->mdkplayer->setupNode(*image_node, item, processPixelsCb);
+                        player->mdkplayer->setupNode(*image_node, item);
+                        player->mdkplayer->setProcessPixelsCallback(processPixelsCb);
+                        player->mdkplayer->setProcessTextureCallback(processTextureCb);
                     }
 
                     QSize newSize = QSizeF(item->size() * item->window()->effectiveDevicePixelRatio()).toSize();

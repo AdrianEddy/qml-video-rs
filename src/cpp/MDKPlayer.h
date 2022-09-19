@@ -13,6 +13,7 @@
 
 #include "VideoTextureNode.h"
 
+typedef std::function<bool(QQuickItem *item, uint32_t frame, double timestamp, uint32_t width, uint32_t height, uint32_t backend_id, uint64_t ptr1, uint64_t ptr2, uint64_t ptr3, uint64_t ptr4)> ProcessTextureCb;
 typedef std::function<QImage(QQuickItem *item, uint32_t frame, double timestamp, const QImage &img)> ProcessPixelsCb;
 typedef std::function<bool(int32_t frame, double timestamp, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize)> VideoProcessCb;
 
@@ -35,7 +36,9 @@ public:
 
     inline QColor getBackgroundColor() { return m_bgColor; }
 
-    void setupNode(QSGImageNode *node, QQuickItem *item, ProcessPixelsCb &&processPixels);
+    void setupNode(QSGImageNode *node, QQuickItem *item);
+    void setProcessPixelsCallback(ProcessPixelsCb &&cb);
+    void setProcessTextureCallback(ProcessTextureCb &&cb);
 
     void setupGpuCompute(std::function<bool(QSize texSize, QSizeF itemSize)> &&initCb, std::function<bool(double, int32_t, bool)> &&renderCb, std::function<void()> &&cleanupCb);
     void cleanupGpuCompute();
@@ -82,6 +85,7 @@ private:
     QMetaObject::Connection m_connectionScreenChanged;
 
     ProcessPixelsCb m_processPixels;
+    ProcessTextureCb m_processTexture;
 
     bool m_gpuProcessingInited{false};
     std::function<bool(QSize, QSizeF)> m_gpuProcessInit;

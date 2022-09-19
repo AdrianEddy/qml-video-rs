@@ -67,6 +67,11 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
         case QSGRendererInterface::Direct3D11Rhi: {
             qDebug2("VideoTextureNodePriv::createTexture") << "QSGRendererInterface::Direct3D11";
 #if (_WIN32+0)
+            m_workaroundTexture = rhi->newTexture(QRhiTexture::RGBA8, QSize(16, 16), 1, QRhiTexture::UsedAsTransferSource);
+            if (!m_workaroundTexture->create()) {
+                releaseResources();
+                return nullptr;
+            }
             D3D11RenderAPI ra;
             ra.rtv = reinterpret_cast<ID3D11DeviceChild*>(quintptr(m_texture->nativeTexture().object));
             player->setRenderAPI(&ra);
@@ -177,6 +182,11 @@ void VideoTextureNodePriv::releaseResources() {
         m_texture->destroy();
         delete m_texture;
         m_texture = nullptr;
+    }
+    if (m_workaroundTexture) {
+        m_workaroundTexture->destroy();
+        delete m_workaroundTexture;
+        m_workaroundTexture = nullptr;
     }
     delete m_readbackResult;
     m_readbackResult = nullptr;
