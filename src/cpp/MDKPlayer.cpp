@@ -271,12 +271,6 @@ void MDKPlayer::windowBeforeRendering() {
 
     bool processed = false;
     if (m_firstFrameLoaded.load()) {
-        if (m_gpuProcessingInited && m_gpuProcessRender) {
-            processed = m_gpuProcessRender(timestamp, frame, false);
-            if (!processed) {
-                qDebug2("MDKPlayer::windowBeforeRendering") << "Failed to run the GPU compute shader";
-            }
-        }
         if (!m_videoLoaded || !m_player) return;
         if (!processed && m_processTexture) {
             uint64_t backend_id = 0;
@@ -356,8 +350,6 @@ void MDKPlayer::sync(QSize newSize, bool force) {
 
     m_size = newSize;
 
-    if (m_gpuProcessCleanup) m_gpuProcessCleanup();
-
     releaseResources();
     auto tex = createTexture(m_player.get(), m_size);
     if (!tex)
@@ -370,8 +362,6 @@ void MDKPlayer::sync(QSize newSize, bool force) {
     m_node->setFiltering(QSGTexture::Linear);
     m_node->setRect(0, 0, m_item->width(), m_item->height());
     m_player->setVideoSurfaceSize(m_size.width(), m_size.height());
-
-    if (m_gpuProcessInit) m_gpuProcessingInited = m_gpuProcessInit(m_size, m_item->size());
 }
 
 void MDKPlayer::play() {
@@ -633,19 +623,6 @@ std::map<std::string, std::string> MDKPlayer::getMediaInfo(const MediaInfo &mi) 
     return ret;
 }
 
-void MDKPlayer::setupGpuCompute(std::function<bool(QSize texSize, QSizeF itemSize)> &&initCb, std::function<bool(double, int32_t, bool)> &&renderCb, std::function<void()> &&cleanupCb) {
-    m_gpuProcessInit = initCb;
-    m_gpuProcessRender = renderCb;
-    m_gpuProcessCleanup = cleanupCb;
-    m_syncNext = true;
-}
-void MDKPlayer::cleanupGpuCompute() {
-    m_gpuProcessingInited = false;
-    qDebug() << "waiting 100ms for cleanup";
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    qDebug() << "cleanupGpuCompute";
-    if (m_gpuProcessCleanup) m_gpuProcessCleanup();
-}
 QSGDefaultRenderContext *MDKPlayer::rhiContext() {
     return static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
 }

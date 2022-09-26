@@ -40,9 +40,6 @@ public:
     void setProcessPixelsCallback(ProcessPixelsCb &&cb);
     void setProcessTextureCallback(ProcessTextureCb &&cb);
 
-    void setupGpuCompute(std::function<bool(QSize texSize, QSizeF itemSize)> &&initCb, std::function<bool(double, int32_t, bool)> &&renderCb, std::function<void()> &&cleanupCb);
-    void cleanupGpuCompute();
-
     void setupPlayer();
 
     void windowBeforeRendering();
@@ -86,11 +83,6 @@ private:
 
     ProcessPixelsCb m_processPixels;
     ProcessTextureCb m_processTexture;
-
-    bool m_gpuProcessingInited{false};
-    std::function<bool(QSize, QSizeF)> m_gpuProcessInit;
-    std::function<bool(double, int32_t, bool)> m_gpuProcessRender;
-    std::function<void()> m_gpuProcessCleanup;
 
     std::unique_ptr<mdk::Player> m_player;
     std::map<uint64_t, std::unique_ptr<mdk::Player>> m_processingPlayers;

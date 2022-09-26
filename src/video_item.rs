@@ -188,8 +188,11 @@ impl MDKVideoItem {
         self.m_player.start_processing(id, width, height, yuv, ranges_ms, cb);
     }
 
-    pub fn get_mdkplayer(&mut self) -> &mut MDKPlayerWrapper {
+    pub fn get_mdkplayer_mut(&mut self) -> &mut MDKPlayerWrapper {
         &mut self.m_player
+    }
+    pub fn get_mdkplayer(&self) -> &MDKPlayerWrapper {
+        &self.m_player
     }
 
     pub fn forceRedraw(&mut self) { self.m_player.force_redraw(); }
