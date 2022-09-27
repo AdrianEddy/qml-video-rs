@@ -8,6 +8,7 @@ use crate::video_player::*;
 
 type ProcessPixelsCb = Box<dyn Fn(u32, f64, u32, u32, u32, &mut [u8]) -> (u32, u32, u32, *mut u8)>;
 type ProcessTextureCb = Box<dyn Fn(u32, f64, u32, u32, u32, u64, u64, u64, u64) -> bool>;
+type ReadyForProcessingCb = Box<dyn Fn() -> bool>;
 type ResizeCb = Box<dyn Fn(u32, u32)>;
 
 pub enum QSGImageNode {}
@@ -79,6 +80,7 @@ pub struct MDKVideoItem {
 
     m_processPixelsCb: Option<ProcessPixelsCb>,
     m_processTextureCb: Option<ProcessTextureCb>,
+    m_readyForProcessingCb: Option<ReadyForProcessingCb>,
     m_resizeCb: Option<ResizeCb>
 }
 
@@ -88,6 +90,9 @@ impl MDKVideoItem {
     }
     pub fn onProcessTexture(&mut self, cb: ProcessTextureCb) {
         self.m_processTextureCb = Some(cb);
+    }
+    pub fn readyForProcessing(&mut self, cb: ReadyForProcessingCb) {
+        self.m_readyForProcessingCb = Some(cb);
     }
     pub fn onResize(&mut self, cb: ResizeCb) {
         self.m_resizeCb = Some(cb);
@@ -171,6 +176,13 @@ impl MDKVideoItem {
             false
         }
     }
+    fn ready_for_processing(&mut self) -> bool {
+        if let Some(ref mut proc) = self.m_readyForProcessingCb {
+            proc()
+        } else {
+            true
+        }
+    }
 
     pub fn setSurfaceSize(&mut self, width: u32, height: u32) {
         self.surfaceWidth = width;
@@ -232,6 +244,14 @@ cpp! {{
             vid_item.process_texture(frame, timestamp, width, height, backend_id, ptr1, ptr2, ptr3, ptr4)
         });
     };
+    bool readyForProcessingCb(QQuickItem *item) {
+        return rust!(Rust_MDKPlayerItem_readyForProcessing [item: *mut std::os::raw::c_void as "QQuickItem *"] -> bool as "bool" {
+            let mut vid_item = MDKVideoItem::get_from_cpp(item);
+            let mut vid_item = unsafe { &mut *vid_item.as_ptr() }; // vid_item.borrow_mut()
+
+            vid_item.ready_for_processing()
+        });
+    };
 }}
 
 impl QQuickItem for MDKVideoItem {
@@ -276,6 +296,7 @@ impl QQuickItem for MDKVideoItem {
                         player->mdkplayer->setupNode(*image_node, item);
                         player->mdkplayer->setProcessPixelsCallback(processPixelsCb);
                         player->mdkplayer->setProcessTextureCallback(processTextureCb);
+                        player->mdkplayer->setReadyForProcessingCallback(readyForProcessingCb);
                     }
 
                     QSize newSize = QSizeF(item->size() * item->window()->effectiveDevicePixelRatio()).toSize();

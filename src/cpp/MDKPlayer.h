@@ -15,6 +15,7 @@
 
 typedef std::function<bool(QQuickItem *item, uint32_t frame, double timestamp, uint32_t width, uint32_t height, uint32_t backend_id, uint64_t ptr1, uint64_t ptr2, uint64_t ptr3, uint64_t ptr4)> ProcessTextureCb;
 typedef std::function<QImage(QQuickItem *item, uint32_t frame, double timestamp, const QImage &img)> ProcessPixelsCb;
+typedef std::function<bool(QQuickItem *item)> ReadyForProcessingCb;
 typedef std::function<bool(int32_t frame, double timestamp, uint32_t width, uint32_t height, const uint8_t *bits, uint64_t bitsSize)> VideoProcessCb;
 
 namespace mdk { class Player; }
@@ -39,6 +40,7 @@ public:
     void setupNode(QSGImageNode *node, QQuickItem *item);
     void setProcessPixelsCallback(ProcessPixelsCb &&cb);
     void setProcessTextureCallback(ProcessTextureCb &&cb);
+    void setReadyForProcessingCallback(ReadyForProcessingCb &&cb);
 
     void setupPlayer();
 
@@ -83,12 +85,15 @@ private:
 
     ProcessPixelsCb m_processPixels;
     ProcessTextureCb m_processTexture;
+    ReadyForProcessingCb m_readyForProcessing;
 
     std::unique_ptr<mdk::Player> m_player;
     std::map<uint64_t, std::unique_ptr<mdk::Player>> m_processingPlayers;
 
     std::atomic<bool> m_videoLoaded{false};
     std::atomic<bool> m_firstFrameLoaded{false};
+
+    int m_renderFailCounter{10};
 
     int64_t m_renderedPosition{-1};
     int64_t m_renderedReturnCount{0};

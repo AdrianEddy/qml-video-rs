@@ -137,6 +137,9 @@ void MDKPlayer::setProcessPixelsCallback(ProcessPixelsCb &&cb) {
 void MDKPlayer::setProcessTextureCallback(ProcessTextureCb &&cb) {
     m_processTexture = cb;
 }
+void MDKPlayer::setReadyForProcessingCallback(ReadyForProcessingCb &&cb) {
+    m_readyForProcessing = cb;
+}
 
 void MDKPlayer::setupPlayer() {
     m_player->setRenderCallback([this](void *) { QMetaObject::invokeMethod(m_item, "update"); });
@@ -240,6 +243,7 @@ void MDKPlayer::windowBeforeRendering() {
     if (m_renderedPosition == m_playerPosition && m_renderedReturnCount++ > 100) {
         return;
     }
+    if (m_readyForProcessing && !m_readyForProcessing(m_item)) return;
 
     auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
     auto cb = context->currentFrameCommandBuffer();
@@ -272,7 +276,7 @@ void MDKPlayer::windowBeforeRendering() {
     bool processed = false;
     if (m_firstFrameLoaded.load()) {
         if (!m_videoLoaded || !m_player) return;
-        if (!processed && m_processTexture) {
+        if (m_processTexture) {
             uint64_t backend_id = 0;
             uint64_t ptr1 = m_texture->nativeTexture().object;
             uint64_t ptr2 = 0;
@@ -314,15 +318,20 @@ void MDKPlayer::windowBeforeRendering() {
                 cb->resourceUpdate(u);
             }
             // -------------- Readback workaround --------------
+
+            if (processed) m_renderFailCounter = 0;
+            else           m_renderFailCounter++;
         }
 
         if (!processed && m_processPixels) {
-            auto img = toImage();
-            if (!m_videoLoaded || !m_player) return;
+            if (!m_processTexture || m_renderFailCounter > 10) {
+                auto img = toImage();
+                if (!m_videoLoaded || !m_player) return;
 
-            const auto img2 = m_processPixels(m_item, frame, timestamp * 1000.0, img);
-            if (!img2.isNull() && img2.constBits()) {
-                fromImage(img2);
+                const auto img2 = m_processPixels(m_item, frame, timestamp * 1000.0, img);
+                if (!img2.isNull() && img2.constBits()) {
+                    fromImage(img2);
+                }
             }
         }
     }
