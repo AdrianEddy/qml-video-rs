@@ -78,6 +78,9 @@ MDKPlayer::~MDKPlayer() {
     m_videoLoaded = false;
     m_firstFrameLoaded = false;
     m_processPixels = nullptr;
+    m_processTexture = nullptr;
+
+    if (m_userDataDestructor && m_userData) m_userDataDestructor(m_userData);
 
     destroyPlayer();
 }
@@ -655,4 +658,13 @@ QSize MDKPlayer::textureSize() {
 }
 QMatrix4x4 MDKPlayer::textureMatrix() {
     return m_proj;
+}
+void *MDKPlayer::userData() const {
+    return m_userData;
+}
+void MDKPlayer::setUserData(void *ptr) {
+    m_userData = ptr;
+}
+void MDKPlayer::setUserDataDestructor(std::function<void(void *)> &&cb) {
+    m_userDataDestructor = cb;
 }

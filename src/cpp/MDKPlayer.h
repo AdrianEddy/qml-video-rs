@@ -79,9 +79,16 @@ public:
     QSize textureSize();
     QMatrix4x4 textureMatrix();
 
+    void *userData() const;
+    void setUserData(void *ptr);
+    void setUserDataDestructor(std::function<void(void *)> &&cb);
+
 private:
     QMetaObject::Connection m_connectionBeforeRendering;
     QMetaObject::Connection m_connectionScreenChanged;
+
+    void *m_userData{nullptr};
+    std::function<void(void *)> m_userDataDestructor;
 
     ProcessPixelsCb m_processPixels;
     ProcessTextureCb m_processTexture;
