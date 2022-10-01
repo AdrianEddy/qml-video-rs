@@ -80,7 +80,7 @@ MDKPlayer::~MDKPlayer() {
     m_processPixels = nullptr;
     m_processTexture = nullptr;
 
-    if (m_userDataDestructor && m_userData) m_userDataDestructor(m_userData);
+    if (m_userDataDestructor && m_userData) { m_userDataDestructor(m_userData); m_userData = nullptr; }
 
     destroyPlayer();
 }
