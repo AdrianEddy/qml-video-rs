@@ -7,7 +7,7 @@ use qmetaobject::*;
 use crate::video_player::*;
 
 type ProcessPixelsCb = Box<dyn Fn(u32, f64, u32, u32, u32, &mut [u8]) -> (u32, u32, u32, *mut u8)>;
-type ProcessTextureCb = Box<dyn Fn(u32, f64, u32, u32, u32, u64, u64, u64, u64) -> bool>;
+type ProcessTextureCb = Box<dyn Fn(u32, f64, u32, u32, u32, u64, u64, u64, u64, u64) -> bool>;
 type ReadyForProcessingCb = Box<dyn Fn() -> bool>;
 type ResizeCb = Box<dyn Fn(u32, u32)>;
 
@@ -169,9 +169,9 @@ impl MDKVideoItem {
             (width, height, stride, pixels.as_mut_ptr())
         }
     }
-    fn process_texture(&mut self, frame: u32, timestamp: f64, width: u32, height: u32, backend_id: u32, ptr1: u64, ptr2: u64, ptr3: u64, ptr4: u64) -> bool {
+    fn process_texture(&mut self, frame: u32, timestamp: f64, width: u32, height: u32, backend_id: u32, ptr1: u64, ptr2: u64, ptr3: u64, ptr4: u64, ptr5: u64) -> bool {
         if let Some(ref mut proc) = self.m_processTextureCb {
-            proc(frame, timestamp, width, height, backend_id, ptr1, ptr2, ptr3, ptr4)
+            proc(frame, timestamp, width, height, backend_id, ptr1, ptr2, ptr3, ptr4, ptr5)
         } else {
             false
         }
@@ -236,12 +236,12 @@ cpp! {{
             qimage_from_parts(vid_item.process_pixels(frame, timestamp, width, height, stride, slice))
         });
     };
-    bool processTextureCb(QQuickItem *item, uint32_t frame, double timestamp, uint32_t width, uint32_t height, uint32_t backend_id, uint64_t ptr1, uint64_t ptr2, uint64_t ptr3, uint64_t ptr4) {
-        return rust!(Rust_MDKPlayerItem_processTexture [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", timestamp: f64 as "double", width: u32 as "uint32_t", height: u32 as "uint32_t", backend_id: u32 as "uint32_t", ptr1: u64 as "uint64_t", ptr2: u64 as "uint64_t", ptr3: u64 as "uint64_t", ptr4: u64 as "uint64_t"] -> bool as "bool" {
+    bool processTextureCb(QQuickItem *item, uint32_t frame, double timestamp, uint32_t width, uint32_t height, uint32_t backend_id, uint64_t ptr1, uint64_t ptr2, uint64_t ptr3, uint64_t ptr4, uint64_t ptr5) {
+        return rust!(Rust_MDKPlayerItem_processTexture [item: *mut std::os::raw::c_void as "QQuickItem *", frame: u32 as "uint32_t", timestamp: f64 as "double", width: u32 as "uint32_t", height: u32 as "uint32_t", backend_id: u32 as "uint32_t", ptr1: u64 as "uint64_t", ptr2: u64 as "uint64_t", ptr3: u64 as "uint64_t", ptr4: u64 as "uint64_t", ptr5: u64 as "uint64_t"] -> bool as "bool" {
             let mut vid_item = MDKVideoItem::get_from_cpp(item);
             let mut vid_item = unsafe { &mut *vid_item.as_ptr() }; // vid_item.borrow_mut()
 
-            vid_item.process_texture(frame, timestamp, width, height, backend_id, ptr1, ptr2, ptr3, ptr4)
+            vid_item.process_texture(frame, timestamp, width, height, backend_id, ptr1, ptr2, ptr3, ptr4, ptr5)
         });
     };
     bool readyForProcessingCb(QQuickItem *item) {

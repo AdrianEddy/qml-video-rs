@@ -32,7 +32,7 @@ void MDKPlayer::initPlayer() {
     #if (__APPLE__+0)
         "VT",
     #elif (__ANDROID__+0)
-        "AMediaCodec:java=1:copy=0:surface=1:async=0",
+        "AMediaCodec:java=0:copy=0:surface=1:async=0",
     #elif (_WIN32+0)
         // "MFT:d3d=11",
         //"CUDA",
@@ -285,6 +285,7 @@ void MDKPlayer::windowBeforeRendering() {
             uint64_t ptr2 = 0;
             uint64_t ptr3 = 0;
             uint64_t ptr4 = 0;
+            uint64_t ptr5 = 0;
 
             QSGRendererInterface *rif = m_window->rendererInterface();
             switch (rif->graphicsApi()) {
@@ -304,14 +305,16 @@ void MDKPlayer::windowBeforeRendering() {
                 } break;
                 case QSGRendererInterface::VulkanRhi: {
                     backend_id = 4;
+                    auto inst = reinterpret_cast<QVulkanInstance *>(rif->getResource(m_window, QSGRendererInterface::VulkanInstanceResource));
                     ptr2 = uint64_t(rif->getResource(m_window, QSGRendererInterface::DeviceResource));
                     ptr3 = uint64_t(rif->getResource(m_window, QSGRendererInterface::CommandListResource));
                     ptr4 = uint64_t(rif->getResource(m_window, QSGRendererInterface::PhysicalDeviceResource));
+                    ptr5 = inst? uint64_t(inst->vkInstance()) : 0;
                 } break;
                 default: break;
             }
 
-            processed = m_processTexture(m_item, frame, timestamp * 1000.0, m_size.width(), m_size.height(), backend_id, ptr1, ptr2, ptr3, ptr4);
+            processed = m_processTexture(m_item, frame, timestamp * 1000.0, m_size.width(), m_size.height(), backend_id, ptr1, ptr2, ptr3, ptr4, ptr5);
 
             // -------------- Readback workaround --------------
             if (processed && rif->graphicsApi() == QSGRendererInterface::Direct3D11Rhi) {
