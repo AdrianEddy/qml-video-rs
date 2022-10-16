@@ -305,11 +305,13 @@ void MDKPlayer::windowBeforeRendering() {
                 } break;
                 case QSGRendererInterface::VulkanRhi: {
                     backend_id = 4;
-                    auto inst = reinterpret_cast<QVulkanInstance *>(rif->getResource(m_window, QSGRendererInterface::VulkanInstanceResource));
                     ptr2 = uint64_t(rif->getResource(m_window, QSGRendererInterface::DeviceResource));
                     ptr3 = uint64_t(rif->getResource(m_window, QSGRendererInterface::CommandListResource));
                     ptr4 = uint64_t(rif->getResource(m_window, QSGRendererInterface::PhysicalDeviceResource));
+                    #if QT_CONFIG(vulkan)
+                    auto inst = reinterpret_cast<QVulkanInstance *>(rif->getResource(m_window, QSGRendererInterface::VulkanInstanceResource));
                     ptr5 = inst? uint64_t(inst->vkInstance()) : 0;
+                    #endif
                 } break;
                 default: break;
             }
