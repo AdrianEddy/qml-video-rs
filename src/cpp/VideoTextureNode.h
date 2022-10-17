@@ -20,6 +20,7 @@
 #   include <vulkan/vulkan_core.h>
 #if QT_CONFIG(vulkan)
 #include <QtGui/private/qrhivulkan_p.h>
+#include <QVulkanInstance>
 #endif
 #endif
 
