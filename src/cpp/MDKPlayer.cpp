@@ -518,6 +518,9 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             if (width == 0) const_cast<uint64_t&>(width) = v.width();
             if (height == 0) const_cast<uint64_t&>(height) = v.height();
 
+            auto format = yuv? mdk::PixelFormat::YUV420P : mdk::PixelFormat::RGBA;
+            if (md.format == "r3d") format = mdk::PixelFormat::BGRA;
+
             /*switch (v.format()) {
                 case mdk::PixelFormat::YUV420P:     qDebug() << "YUV420P";     break;
                 case mdk::PixelFormat::NV12:        qDebug() << "NV12";        break;
@@ -547,7 +550,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
                 case mdk::PixelFormat::BGRAF32:     qDebug() << "BGRAF32";     break;
             }*/
 
-            auto vscaled = v.to(yuv? mdk::PixelFormat::YUV420P : mdk::PixelFormat::RGBA, width, height);
+            auto vscaled = v.to(format, width, height);
             auto ptr = vscaled.bufferData();
             auto ptr_size = vscaled.bytesPerLine() * vscaled.height();
 
