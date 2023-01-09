@@ -47,6 +47,7 @@ void MDKPlayer::initPlayer() {
         "VAAPI",
     #endif
         "BRAW:gpu=auto:scale=1920x1080",
+        "R3D:gpu=auto:scale=1920x1080",
         "FFmpeg"});
     }
 
