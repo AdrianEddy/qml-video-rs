@@ -305,6 +305,7 @@ void MDKPlayer::windowBeforeRendering() {
                     ptr3 = uint64_t(rif->getResource(m_window, QSGRendererInterface::DeviceContextResource));
                 } break;
                 case QSGRendererInterface::VulkanRhi: {
+                    context->rhi()->finish();
                     backend_id = 4;
                     ptr2 = uint64_t(rif->getResource(m_window, QSGRendererInterface::DeviceResource));
                     ptr3 = uint64_t(rif->getResource(m_window, QSGRendererInterface::CommandListResource));
@@ -319,15 +320,39 @@ void MDKPlayer::windowBeforeRendering() {
                 default: break;
             }
 
+#if (_WIN32+0)
+    // On DirectX we need to wait until MDK finishes rendering the video before we do any further processing with it
+    if (rif->graphicsApi() == QSGRendererInterface::Direct3D11Rhi) {
+        auto dev = (ID3D11Device *)       rif->getResource(m_window, QSGRendererInterface::DeviceResource);
+        auto ctx = (ID3D11DeviceContext *)rif->getResource(m_window, QSGRendererInterface::DeviceContextResource);
+
+        ID3D11Device5 *dev5 = nullptr;
+        ID3D11DeviceContext4 *ctx4 = nullptr;
+        if (dev->QueryInterface(IID_ID3D11Device5, (void**)&dev5) == S_OK) {
+            if (ctx->QueryInterface(IID_ID3D11DeviceContext4, (void**)&ctx4) == S_OK) {
+                if (!m_fence) {
+                    if (dev5->CreateFence(m_fenceValue, D3D11_FENCE_FLAG_NONE, __uuidof(ID3D11Fence), (void**)&m_fence) == S_OK) {
+                        m_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+                    }
+                }
+                if (m_fence && m_event) {
+                    ctx4->Signal(m_fence, ++m_fenceValue);
+                    m_fence->SetEventOnCompletion(m_fenceValue, m_event);
+                    WaitForSingleObject(m_event, 5000);
+                }
+            }
+        }
+    }
+#endif
             processed = m_processTexture(m_item, frame, timestamp * 1000.0, m_size.width(), m_size.height(), backend_id, ptr1, ptr2, ptr3, ptr4, ptr5);
 
             // -------------- Readback workaround --------------
-            if (processed && rif->graphicsApi() == QSGRendererInterface::Direct3D11Rhi) {
-                if (!m_readbackResult) m_readbackResult = new QRhiReadbackResult();
-                QRhiResourceUpdateBatch *u = context->rhi()->nextResourceUpdateBatch();
-                u->readBackTexture({ m_workaroundTexture }, m_readbackResult);
-                cb->resourceUpdate(u);
-            }
+            // if (processed && rif->graphicsApi() == QSGRendererInterface::Direct3D11Rhi) {
+            //     if (!m_readbackResult) m_readbackResult = new QRhiReadbackResult();
+            //     QRhiResourceUpdateBatch *u = context->rhi()->nextResourceUpdateBatch();
+            //     u->readBackTexture({ m_workaroundTexture }, m_readbackResult);
+            //     cb->resourceUpdate(u);
+            // }
             // -------------- Readback workaround --------------
 
             if (processed) m_renderFailCounter = 0;

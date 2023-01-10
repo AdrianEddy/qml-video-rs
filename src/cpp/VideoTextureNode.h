@@ -11,6 +11,7 @@
 
 #if (_WIN32+0)
 #   include <d3d11.h>
+#   include <d3d11_4.h>
 #endif
 #if (__APPLE__+0)
 #   include <private/qsgtexture_p.h>
@@ -53,6 +54,12 @@ public:
 
     QMatrix4x4 m_proj;
     QSize m_size;
+
+#if (_WIN32+0)
+    ID3D11Fence *m_fence{nullptr};
+    HANDLE m_event{nullptr};
+    uint64_t m_fenceValue{0};
+#endif
 };
 
 #endif
