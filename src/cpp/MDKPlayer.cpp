@@ -68,6 +68,7 @@ void MDKPlayer::destroyPlayer() {
         stop();
         m_player->setRenderCallback(nullptr);
         m_player->onMediaStatusChanged(nullptr);
+        m_player->onStateChanged(nullptr);
         m_player->onEvent(nullptr);
         m_player->onFrame<mdk::VideoFrame>(nullptr);
         auto ptr = m_player.release();
@@ -483,7 +484,7 @@ int MDKPlayer::getRotation() {
 void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t height, bool yuv, const std::vector<std::pair<uint64_t, uint64_t>> &ranges, VideoProcessCb &&cb) { // ms
     m_processingPlayers[id] = std::make_unique<mdk::Player>();
     auto player = m_processingPlayers[id].get();
-    player->setDecoders(MediaType::Video, { "FFmpeg" });
+    player->setDecoders(MediaType::Video, { "FFmpeg", "BRAW:gpu=auto:scale=1920x1080", "R3D:gpu=auto:scale=1920x1080" });
 
     player->setMedia(m_player? m_player->url() : qUtf8Printable(m_pendingUrl.toLocalFile()));
 
