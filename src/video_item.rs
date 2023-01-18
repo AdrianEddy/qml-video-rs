@@ -47,6 +47,7 @@ pub struct MDKVideoItem {
 
     pub url:    qt_property!(QUrl; CONST),
     pub setUrl: qt_method!(fn(&mut self, url: QUrl, custom_decoder: QString)),
+    pub setProperty: qt_method!(fn(&mut self, key: QString, value: QString)),
 
     pub forceRedraw: qt_method!(fn(&mut self)),
 
@@ -124,6 +125,9 @@ impl MDKVideoItem {
         self.setMuted(prev_muted);
         self.forceRedraw();
     }
+    pub fn setProperty(&mut self, key: QString, value: QString) {
+        self.m_player.set_property(key, value);
+    }
 
     pub fn setMuted(&mut self, v: bool) { self.m_player.set_muted(v); self.mutedChanged(); }
     pub fn getMuted(&self) -> bool { self.m_player.get_muted() }
@@ -196,8 +200,8 @@ impl MDKVideoItem {
         self.m_player.set_playback_range(from_ms, to_ms);
     }
 
-    pub fn startProcessing<F: FnMut(i32, f64, u32, u32, &mut [u8]) -> bool + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, ranges_ms: Vec<(usize, usize)>, cb: F) {
-        self.m_player.start_processing(id, width, height, yuv, ranges_ms, cb);
+    pub fn startProcessing<F: FnMut(i32, f64, u32, u32, u32, u32, &mut [u8]) -> bool + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, custom_decoder: &str, ranges_ms: Vec<(usize, usize)>, cb: F) {
+        self.m_player.start_processing(id, width, height, custom_decoder, yuv, ranges_ms, cb);
     }
 
     pub fn get_mdkplayer_mut(&mut self) -> &mut MDKPlayerWrapper {

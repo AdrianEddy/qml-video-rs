@@ -87,6 +87,12 @@ MDKPlayer::~MDKPlayer() {
     destroyPlayer();
 }
 
+void MDKPlayer::setProperty(const QString &key, const QString &value) {
+    if (m_player) {
+        m_player->setProperty(key.toStdString(), value.toStdString());
+    }
+}
+
 void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
     m_overrideFps = 0.0;
     if (!m_item) {
@@ -481,10 +487,15 @@ int MDKPlayer::getRotation() {
     return 0;
 }
 
-void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t height, bool yuv, const std::vector<std::pair<uint64_t, uint64_t>> &ranges, VideoProcessCb &&cb) { // ms
+void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t height, bool yuv, std::string custom_decoder, const std::vector<std::pair<uint64_t, uint64_t>> &ranges, VideoProcessCb &&cb) { // ms
     m_processingPlayers[id] = std::make_unique<mdk::Player>();
     auto player = m_processingPlayers[id].get();
-    player->setDecoders(MediaType::Video, { "FFmpeg", "BRAW:gpu=auto", "R3D:gpu=auto" });
+    if (!custom_decoder.empty()) {
+        player->setDecoders(MediaType::Video, { custom_decoder });
+    } else {
+        player->setDecoders(MediaType::Video, { "FFmpeg", "BRAW:gpu=auto", "R3D:gpu=auto" });
+    }
+
 
     player->setMedia(m_player? m_player->url() : qUtf8Printable(m_pendingUrl.toLocalFile()));
 
@@ -499,7 +510,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
 
     player->onFrame<mdk::VideoFrame>([cb, width, height, id, range_id, yuv, ranges, this](mdk::VideoFrame &v, int) {
         if (!v || v.timestamp() == mdk::TimestampEOS) { // AOT frame(1st frame, seek end 1st frame) is not valid, but format is valid. eof frame format is invalid
-            cb(-1, -1.0, 0, 0, 0, 0);
+            cb(-1, -1.0, 0, 0, 0, 0, 0, 0);
             auto ptr = m_processingPlayers[id].release();
             QTimer::singleShot(1, [ptr] {
                 ptr->set(mdk::PlaybackState::Stopped);
@@ -525,7 +536,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             auto ptr = m_processingPlayers[id].release();
             ptr->set(mdk::PlaybackState::Paused);
             ptr->waitFor(mdk::PlaybackState::Paused);
-            cb(-1, -1.0, 0, 0, 0, 0);
+            cb(-1, -1.0, 0, 0, 0, 0, 0, 0);
             QTimer::singleShot(1, [ptr] {
                 ptr->set(mdk::PlaybackState::Stopped);
                 ptr->waitFor(mdk::PlaybackState::Stopped);
@@ -580,12 +591,12 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             auto ptr = vscaled.bufferData();
             auto ptr_size = vscaled.bytesPerLine() * vscaled.height();
 
-            if (!cb(frame_num, timestamp_ms, vscaled.width(), vscaled.height(), ptr, ptr_size)) {
+            if (!cb(frame_num, timestamp_ms, vscaled.width(), vscaled.height(), vmd.codec.width, vmd.codec.height, ptr, ptr_size)) {
                 // If cb returns false - stop the processing
                 auto pptr = m_processingPlayers[id].release();
                 pptr->set(mdk::PlaybackState::Paused);
                 pptr->waitFor(mdk::PlaybackState::Paused);
-                cb(-1, -1.0, 0, 0, 0, 0);
+                cb(-1, -1.0, 0, 0, 0, 0, 0, 0);
                 QTimer::singleShot(1, [pptr] {
                     pptr->set(mdk::PlaybackState::Stopped);
                     pptr->waitFor(mdk::PlaybackState::Stopped);
