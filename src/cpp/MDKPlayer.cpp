@@ -500,6 +500,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
     player->setMedia(m_player? m_player->url() : qUtf8Printable(m_pendingUrl.toLocalFile()));
 
     player->setDecoders(MediaType::Audio, { });
+    player->setMute(true);
     player->onSync([] { return DBL_MAX; });
 
     if (ranges.empty()) {
