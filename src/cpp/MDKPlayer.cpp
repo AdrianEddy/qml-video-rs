@@ -511,7 +511,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
 
     player->onFrame<mdk::VideoFrame>([cb, width, height, id, range_id, yuv, ranges, this](mdk::VideoFrame &v, int) {
         if (!v || v.timestamp() == mdk::TimestampEOS) { // AOT frame(1st frame, seek end 1st frame) is not valid, but format is valid. eof frame format is invalid
-            cb(-1, -1.0, 0, 0, 0, 0, 0, 0);
+            cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
             auto ptr = m_processingPlayers[id].release();
             QTimer::singleShot(1, [ptr] {
                 ptr->set(mdk::PlaybackState::Stopped);
@@ -537,7 +537,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             auto ptr = m_processingPlayers[id].release();
             ptr->set(mdk::PlaybackState::Paused);
             ptr->waitFor(mdk::PlaybackState::Paused);
-            cb(-1, -1.0, 0, 0, 0, 0, 0, 0);
+            cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
             QTimer::singleShot(1, [ptr] {
                 ptr->set(mdk::PlaybackState::Stopped);
                 ptr->waitFor(mdk::PlaybackState::Stopped);
@@ -557,7 +557,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             if (height == 0) const_cast<uint64_t&>(height) = v.height();
 
             auto format = yuv? mdk::PixelFormat::YUV420P : mdk::PixelFormat::RGBA;
-            if (md.format == "r3d") format = mdk::PixelFormat::BGRA;
+            if (!strcmp(md.format, "r3d")) format = mdk::PixelFormat::BGRA;
 
             /*switch (v.format()) {
                 case mdk::PixelFormat::YUV420P:     qDebug() << "YUV420P";     break;
@@ -592,12 +592,12 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             auto ptr = vscaled.bufferData();
             auto ptr_size = vscaled.bytesPerLine() * vscaled.height();
 
-            if (!cb(frame_num, timestamp_ms, vscaled.width(), vscaled.height(), vmd.codec.width, vmd.codec.height, ptr, ptr_size)) {
+            if (!cb(frame_num, timestamp_ms, vscaled.width(), vscaled.height(), vmd.codec.width, vmd.codec.height, vmd.codec.frame_rate, vmd.duration, vmd.frames, ptr, ptr_size)) {
                 // If cb returns false - stop the processing
                 auto pptr = m_processingPlayers[id].release();
                 pptr->set(mdk::PlaybackState::Paused);
                 pptr->waitFor(mdk::PlaybackState::Paused);
-                cb(-1, -1.0, 0, 0, 0, 0, 0, 0);
+                cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
                 QTimer::singleShot(1, [pptr] {
                     pptr->set(mdk::PlaybackState::Stopped);
                     pptr->waitFor(mdk::PlaybackState::Stopped);

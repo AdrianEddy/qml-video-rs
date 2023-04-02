@@ -200,7 +200,7 @@ impl MDKVideoItem {
         self.m_player.set_playback_range(from_ms, to_ms);
     }
 
-    pub fn startProcessing<F: FnMut(i32, f64, u32, u32, u32, u32, &mut [u8]) -> bool + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, custom_decoder: &str, ranges_ms: Vec<(usize, usize)>, cb: F) {
+    pub fn startProcessing<F: FnMut(i32, f64, u32, u32, u32, u32, f64, f64, u32, &mut [u8]) -> bool + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, custom_decoder: &str, ranges_ms: Vec<(usize, usize)>, cb: F) {
         self.m_player.start_processing(id, width, height, custom_decoder, yuv, ranges_ms, cb);
     }
 
