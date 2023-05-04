@@ -105,6 +105,11 @@ fn main() {
 }
 
 fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error> {
+    if let Ok(path) = env::var("MDK_SDK") {
+        if Path::new(&format!("{}/{}", path, check)).exists() {
+            return Ok(path);
+        }
+    }
     let out_dir = env::var("OUT_DIR").unwrap();
     if !Path::new(&format!("{}/mdk-sdk/{}", out_dir, check)).exists() {
         let ext = if url.contains(".tar.xz") { ".tar.xz" } else { ".7z" };
