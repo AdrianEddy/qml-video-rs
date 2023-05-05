@@ -11,6 +11,7 @@
 
 #if (_WIN32+0)
 #   include <d3d11.h>
+#   include <d3d12.h>
 #   include <d3d11_4.h>
 #endif
 #if (__APPLE__+0)
