@@ -36,6 +36,9 @@ public:
     void setMuted(bool v);
     bool getMuted();
 
+    void setVolume(float v);
+    float getVolume();
+
     inline QColor getBackgroundColor() { return m_bgColor; }
 
     void setupNode(QSGImageNode *node, QQuickItem *item);

@@ -80,6 +80,7 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
         } break;
 # if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
         case QSGRendererInterface::Direct3D12: {
+            qDebug2("VideoTextureNodePriv::createTexture") << "QSGRendererInterface::Direct3D12";
             D3D12RenderAPI ra;
             ra.cmdQueue = reinterpret_cast<ID3D12CommandQueue*>(rif->getResource(m_window, QSGRendererInterface::CommandQueueResource));
             ra.rt = reinterpret_cast<ID3D12Resource*>(quintptr(m_texture->nativeTexture().object));

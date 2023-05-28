@@ -54,6 +54,9 @@ pub struct MDKVideoItem {
     pub muted: qt_property!(bool; READ getMuted WRITE setMuted NOTIFY mutedChanged),
     pub mutedChanged: qt_signal!(),
 
+    pub volume: qt_property!(f32; READ getVolume WRITE setVolume NOTIFY volumeChanged),
+    pub volumeChanged: qt_signal!(),
+
     pub videoWidth: qt_property!(u32; NOTIFY metadataChanged),
     pub videoHeight: qt_property!(u32; NOTIFY metadataChanged),
 
@@ -131,6 +134,9 @@ impl MDKVideoItem {
 
     pub fn setMuted(&mut self, v: bool) { self.m_player.set_muted(v); self.mutedChanged(); }
     pub fn getMuted(&self) -> bool { self.m_player.get_muted() }
+
+    pub fn setVolume(&mut self, v: f32) { self.m_player.set_volume(v); self.volumeChanged(); }
+    pub fn getVolume(&self) -> f32 { self.m_player.get_volume() }
 
     fn frameRendered(&mut self, ts: f64) {
         let nts = ts.max(0.0);

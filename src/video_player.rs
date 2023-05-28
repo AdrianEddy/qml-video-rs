@@ -94,6 +94,18 @@ impl MDKPlayerWrapper {
             return self->mdkplayer->getMuted();
         })
     }
+
+    pub fn set_volume(&mut self, v: f32) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *", v as "float"] {
+            self->mdkplayer->setVolume(v);
+        })
+    }
+    pub fn get_volume(&self) -> f32 {
+        cpp!(unsafe [self as "MDKPlayerWrapper *"] -> f32 as "float" {
+            return self->mdkplayer->getVolume();
+        })
+    }
+
     pub fn set_playback_range(&mut self, from_ms: i64, to_ms: i64) {
         cpp!(unsafe [self as "MDKPlayerWrapper *", from_ms as "int64_t", to_ms as "int64_t"] {
             self->mdkplayer->setPlaybackRange(from_ms, to_ms);

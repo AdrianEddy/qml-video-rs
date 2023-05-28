@@ -132,6 +132,9 @@ void MDKPlayer::setMuted(bool v) {
 }
 bool MDKPlayer::getMuted() { return m_player? m_player->isMute() : false; }
 
+void MDKPlayer::setVolume(float v) { if (m_player) m_player->setVolume(v); }
+float MDKPlayer::getVolume() { return m_player? m_player->volume() : 0.0; }
+
 void MDKPlayer::setupNode(QSGImageNode *node, QQuickItem *item) {
     m_node = node;
     m_item = item;
