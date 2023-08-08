@@ -4,8 +4,13 @@
 #include <QQuickWindow>
 #include <QSGImageNode>
 #include <private/qquickitem_p.h>
-#include <private/qrhi_p.h>
-#include <private/qrhigles2_p_p.h>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+#   include <rhi/qrhi.h>
+#   include <private/qrhigles2_p.h>
+#else
+#   include <private/qrhi_p.h>
+#   include <private/qrhigles2_p_p.h>
+#endif
 #include <private/qsgrenderer_p.h>
 #include <private/qsgdefaultrendercontext_p.h>
 
