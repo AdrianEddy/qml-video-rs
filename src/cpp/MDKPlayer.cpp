@@ -13,6 +13,7 @@ void printMd(const std::map<std::string, std::string> &md) {
         qDebug2("printMd") << QString::fromStdString(x.first) << " = " << QString::fromStdString(x.second);
     }
 }
+std::string toStdString(const QString &str) { return std::string(qUtf8Printable(str), str.size()); }
 
 MDKPlayer::MDKPlayer() { }
 
@@ -24,7 +25,7 @@ void MDKPlayer::initPlayer() {
     if (!overrideDecoders.isEmpty()) {
         std::vector<std::string> vec;
         for (const auto &x : overrideDecoders.split(",")) {
-            vec.push_back(x.toStdString());
+            vec.push_back(toStdString(x));
         }
         m_player->setDecoders(mdk::MediaType::Video, vec);
     } else {
@@ -66,11 +67,11 @@ void MDKPlayer::destroyPlayer() {
 
     if (m_player) {
         stop();
-        m_player->setRenderCallback(nullptr);
-        m_player->onMediaStatusChanged(nullptr);
-        m_player->onStateChanged(nullptr);
-        m_player->onEvent(nullptr);
-        m_player->onFrame<mdk::VideoFrame>(nullptr);
+        m_player->setRenderCallback([](void *) {});
+        m_player->onMediaStatusChanged([](mdk::MediaStatus) -> bool { return false; });
+        m_player->onStateChanged([](mdk::State) {});
+        m_player->onEvent([](const mdk::MediaEvent &) -> bool { return false; });
+        m_player->onFrame<mdk::VideoFrame>([](mdk::VideoFrame&, int) -> int { return 0; });
         auto ptr = m_player.release();
         QTimer::singleShot(1000, [ptr] { delete ptr; }); // delete later
     }
@@ -89,7 +90,7 @@ MDKPlayer::~MDKPlayer() {
 
 void MDKPlayer::setProperty(const QString &key, const QString &value) {
     if (m_player) {
-        m_player->setProperty(key.toStdString(), value.toStdString());
+        m_player->setProperty(toStdString(key), toStdString(value));
     }
 }
 
@@ -109,7 +110,7 @@ void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
         if (customDecoder.startsWith("FFmpeg:avformat_options=")) {
             additionalUrl = "?mdkopt=avformat&" + customDecoder.mid(24);
         } else {
-            m_player->setDecoders(mdk::MediaType::Video, { customDecoder.toStdString() });
+            m_player->setDecoders(mdk::MediaType::Video, { toStdString(customDecoder) });
         }
     }
 
@@ -187,6 +188,7 @@ void MDKPlayer::setupPlayer() {
     });
 
     m_player->onMediaStatusChanged([this](mdk::MediaStatus status) -> bool {
+        if (!m_player) return false;
 
         // qDebug2("m_player->onMediaStatusChanged") <<
         //     QString(status & mdk::MediaStatus::Unloaded?  "Unloaded | "  : "") +
@@ -512,7 +514,7 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
 
     auto range_id = new uint(0);
 
-    player->onFrame<mdk::VideoFrame>([cb, width, height, id, range_id, yuv, ranges, this](mdk::VideoFrame &v, int) {
+    player->onFrame<mdk::VideoFrame>([cb, width, height, id, range_id, yuv, ranges, this](mdk::VideoFrame &v, int) -> int {
         if (!v || v.timestamp() == mdk::TimestampEOS) { // AOT frame(1st frame, seek end 1st frame) is not valid, but format is valid. eof frame format is invalid
             cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
             auto ptr = m_processingPlayers[id].release();
