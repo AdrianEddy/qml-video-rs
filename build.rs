@@ -73,6 +73,10 @@ fn main() {
             let _ = std::fs::copy(format!("{}/bin/x64/ffmpeg-5.dll", path), format!("{}/../../../ffmpeg-5.dll", env::var("OUT_DIR").unwrap()));
             let _ = std::fs::copy(format!("{}/bin/x64/mdk-braw.dll", path), format!("{}/../../../mdk-braw.dll", env::var("OUT_DIR").unwrap()));
             let _ = std::fs::copy(format!("{}/bin/x64/mdk-r3d.dll", path), format!("{}/../../../mdk-r3d.dll", env::var("OUT_DIR").unwrap()));
+
+            let _ = std::fs::copy(format!("{}/bin/x64/mdk.pdb", path), format!("{}/../../../mdk.pdb", env::var("OUT_DIR").unwrap())).unwrap();
+            let _ = std::fs::copy(format!("{}/bin/x64/mdk-braw.pdb", path), format!("{}/../../../mdk-braw.pdb", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/bin/x64/mdk-r3d.pdb", path), format!("{}/../../../mdk-r3d.pdb", env::var("OUT_DIR").unwrap()));
         }
         if target_os == "android" {
             std::fs::copy(format!("{}/lib/arm64-v8a/libmdk.so", path), format!("{}/../../../libmdk.so", env::var("OUT_DIR").unwrap())).unwrap();
