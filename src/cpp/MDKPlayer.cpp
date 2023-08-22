@@ -39,12 +39,12 @@ void MDKPlayer::initPlayer() {
         //"CUDA",
         //"NVDEC",
         //"CUVID",
-        "D3D11:sw_fallback=1",
+        "D3D11",
         "DXVA",
     #elif (__linux__+0)
         "CUDA",
         "VDPAU",
-        "VAAPI:sw_fallback=1",
+        "VAAPI",
     #endif
         "BRAW:gpu=auto:scale=1920x1080",
         "R3D:gpu=auto:scale=1920x1080",
