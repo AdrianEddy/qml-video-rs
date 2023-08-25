@@ -3,6 +3,10 @@
 #include <string>
 #include <thread>
 #include <QTimer>
+#include <QGuiApplication>
+#if __has_include(<QX11Info>)
+#include <QX11Info>
+#endif
 
 #include "mdk/Player.h"
 #include "mdk/VideoFrame.h"
@@ -15,7 +19,16 @@ void printMd(const std::map<std::string, std::string> &md) {
 }
 std::string toStdString(const QString &str) { return std::string(qUtf8Printable(str), str.size()); }
 
-MDKPlayer::MDKPlayer() { }
+MDKPlayer::MDKPlayer() {
+#ifdef QX11INFO_X11_H
+    SetGlobalOption("X11Display", QX11Info::display());
+    qDebug("X11 display: %p", QX11Info::display());
+#elif (QT_FEATURE_xcb + 0 == 1) && (QT_VERSION >= QT_VERSION_CHECK(6, 2, 0))
+    const auto xdisp = qGuiApp->nativeInterface<QNativeInterface::QX11Application>()->display();
+    SetGlobalOption("X11Display", xdisp);
+    qDebug("X11 display: %p", xdisp);
+#endif
+}
 
 void MDKPlayer::initPlayer() {
     m_player = std::make_unique<mdk::Player>();
