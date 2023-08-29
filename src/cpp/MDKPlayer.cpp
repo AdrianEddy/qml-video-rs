@@ -52,12 +52,12 @@ void MDKPlayer::initPlayer() {
         //"CUDA",
         //"NVDEC",
         //"CUVID",
-        "D3D11",
+        "D3D11:sw_fallback=1",
         "DXVA",
     #elif (__linux__+0)
         "CUDA",
         "VDPAU",
-        "VAAPI",
+        "VAAPI:sw_fallback=1",
     #endif
         "BRAW:gpu=auto:scale=1920x1080",
         "R3D:gpu=auto:scale=1920x1080",
@@ -126,12 +126,11 @@ void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
         }
     }
 
-    #ifdef Q_OS_ANDROID
     QString path = url.toString() + additionalUrl;
-    #else
-    QString path = url.toLocalFile() + additionalUrl;
-    #endif
-    qDebug2("setUrl") << "Final path:" << path;
+    if (url.scheme() == "file") {
+        path = url.toLocalFile() + additionalUrl;
+    }
+    qDebug2("setUrl") << "Final url:" << path;
     m_player->setMedia(qUtf8Printable(path));
     m_player->prepare();
 }
