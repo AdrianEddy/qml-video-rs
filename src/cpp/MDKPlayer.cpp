@@ -129,6 +129,8 @@ void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
     QString path = url.toString() + additionalUrl;
     if (url.scheme() == "file") {
         path = url.toLocalFile() + additionalUrl;
+    } else if (path.contains(' ')) {
+        path.replace(' ', "%20");
     }
     qDebug2("setUrl") << "Final url:" << path;
     m_player->setMedia(qUtf8Printable(path));
