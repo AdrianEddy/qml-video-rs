@@ -118,8 +118,8 @@ impl MDKPlayerWrapper {
         })
     }
 
-    pub fn set_log_handler<F: Fn(i32, String) + 'static>(cb: F) {
-        let func: Box<dyn Fn(i32, String)> = Box::new(cb);
+    pub fn set_log_handler<F: Fn(i32, &str) + 'static>(cb: F) {
+        let func: Box<dyn Fn(i32, &str)> = Box::new(cb);
         let cb_ptr = Box::into_raw(func);
 
         #[cfg(target_os = "android")]
@@ -129,12 +129,12 @@ impl MDKPlayerWrapper {
 
         cpp!(unsafe [cb_ptr as "TraitObject2"] {
             setLogHandler([cb_ptr](LogLevel level, const char *text) {
-                rust!(Rust_MDKPlayer_logHandler [cb_ptr: *mut dyn FnMut(i32, String) as "TraitObject2", level: i32 as "int", text: TextPtr as "const char *"] {
-                    let text = unsafe { std::ffi::CStr::from_ptr(text) }.to_string_lossy().to_string();
+                rust!(Rust_MDKPlayer_logHandler [cb_ptr: *mut dyn FnMut(i32, &str) as "TraitObject2", level: i32 as "int", text: TextPtr as "const char *"] {
+                    let text = unsafe { std::ffi::CStr::from_ptr(text) }.to_string_lossy();
 
                     let mut cb = unsafe { Box::from_raw(cb_ptr) };
 
-                    cb(level, text);
+                    cb(level, &text);
                     let _ = Box::into_raw(cb); // leak again so it doesn't get deleted here
                 });
             });

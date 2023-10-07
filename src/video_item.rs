@@ -220,7 +220,7 @@ impl MDKVideoItem {
     pub fn forceRedraw(&mut self) { self.m_player.force_redraw(); }
 
     pub fn setGlobalOption(key: &str, val: &str) { MDKPlayerWrapper::set_global_option(QString::from(key), QString::from(val)); }
-    pub fn setLogHandler<F: Fn(i32, String) + 'static>(cb: F) { MDKPlayerWrapper::set_log_handler(cb); }
+    pub fn setLogHandler<F: Fn(i32, &str) + 'static>(cb: F) { MDKPlayerWrapper::set_log_handler(cb); }
 }
 
 fn qimage_from_parts(parts: (u32, u32, u32, *mut u8)) -> QImage {
