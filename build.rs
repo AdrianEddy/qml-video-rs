@@ -45,7 +45,7 @@ fn main() {
     let nightly = "";
 
     let sdk: HashMap<&str, (String, &str, &str, &str)> = vec![
-        ("windows",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-windows-desktop-vs2022-ltl.7z?viasf=1", nightly), "lib/x64/",           "mdk.lib",    "include/")),
+        ("windows",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-windows-desktop-clang.7z?viasf=1", nightly),  "lib/x64/",           "mdk.lib",    "include/")),
         ("linux",    (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-linux.tar.xz?viasf=1", nightly),              "lib/amd64/",         "libmdk.so",  "include/")),
         ("macos",    (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-macOS.tar.xz?viasf=1", nightly),              "lib/mdk.framework/", "mdk",        "include/")),
         ("android",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-android.7z?viasf=1", nightly),                "lib/arm64-v8a/",     "libmdk.so",  "include/")),
