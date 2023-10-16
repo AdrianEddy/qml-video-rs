@@ -126,7 +126,7 @@ void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
         }
     }
 
-    QString path = url.toString() + additionalUrl;
+    QString path = url.toEncoded() + additionalUrl;
     if (url.scheme() == "file") {
         path = url.toLocalFile() + additionalUrl;
     } else if (path.contains(' ')) {
