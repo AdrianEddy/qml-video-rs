@@ -46,7 +46,7 @@ void MDKPlayer::initPlayer() {
     #if (__APPLE__+0)
         "VT",
     #elif (__ANDROID__+0)
-        "AMediaCodec:java=0:copy=0:surface=1:async=0",
+        "AMediaCodec:java=0:copy=0:surface=1:async=0:image=0",
     #elif (_WIN32+0)
         // "MFT:d3d=11",
         //"CUDA",
@@ -459,14 +459,14 @@ void MDKPlayer::setFrameRate(float fps) {
     m_overrideFps = fps;
 }
 
-void MDKPlayer::seekToTimestamp(float timestampMs, bool keyframe) {
+void MDKPlayer::seekToTimestamp(float timestampMs, bool exact) {
     if (!m_videoLoaded || !m_player) return;
 
-    m_player->seek(timestampMs, keyframe? mdk::SeekFlag::FromStart | mdk::SeekFlag::KeyFrame : mdk::SeekFlag::FromStart);
+    m_player->seek(timestampMs, exact? mdk::SeekFlag::FromStart : mdk::SeekFlag::FromStart | mdk::SeekFlag::KeyFrame);
     forceRedraw();
 }
 
-void MDKPlayer::seekToFrame(int64_t frame, int64_t currentFrame) {
+void MDKPlayer::seekToFrame(int64_t frame, int64_t currentFrame, bool exact) {
     if (!m_videoLoaded || !m_player) return;
 
     auto delta = frame - currentFrame;
@@ -476,7 +476,7 @@ void MDKPlayer::seekToFrame(int64_t frame, int64_t currentFrame) {
         auto md = m_player->mediaInfo();
         if (!md.video.empty()) {
             auto v = md.video[0];
-            seekToTimestamp((frame / v.codec.frame_rate) * 1000.0);
+            seekToTimestamp((frame / v.codec.frame_rate) * 1000.0, exact);
         }
     }
     forceRedraw();

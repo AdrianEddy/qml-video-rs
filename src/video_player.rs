@@ -26,14 +26,14 @@ impl MDKPlayerWrapper {
         })
     }
 
-    pub fn seek_to_timestamp(&mut self, timestamp: f64) {
-        cpp!(unsafe [self as "MDKPlayerWrapper *", timestamp as "double"] {
-            self->mdkplayer->seekToTimestamp(timestamp);
+    pub fn seek_to_timestamp(&mut self, timestamp: f64, exact: bool) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *", timestamp as "double", exact as "bool"] {
+            self->mdkplayer->seekToTimestamp(timestamp, exact);
         })
     }
-    pub fn seek_to_frame(&mut self, frame: i64, current_frame: i64) {
-        cpp!(unsafe [self as "MDKPlayerWrapper *", frame as "int64_t", current_frame as "int64_t"] {
-            self->mdkplayer->seekToFrame(frame, current_frame);
+    pub fn seek_to_frame(&mut self, frame: i64, current_frame: i64, exact: bool) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *", frame as "int64_t", current_frame as "int64_t", exact as "bool"] {
+            self->mdkplayer->seekToFrame(frame, current_frame, exact);
         })
     }
 

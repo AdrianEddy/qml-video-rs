@@ -57,8 +57,8 @@ public:
     void pause();
     void stop();
 
-    void seekToTimestamp(float timestampMs, bool keyframe = false);
-    void seekToFrame(int64_t frame, int64_t currentFrame);
+    void seekToTimestamp(float timestampMs, bool exact = false);
+    void seekToFrame(int64_t frame, int64_t currentFrame, bool exact = false);
 
     void setFrameRate(float fps);
 

@@ -43,6 +43,9 @@ pub struct MDKVideoItem {
     pub setTimestamp:     qt_method!(fn(&mut self, timestamp: f64)),
     pub timestampChanged: qt_signal!(),
 
+    pub seekToFrame:      qt_method!(fn(&mut self, frame: i64, exact: bool)),
+    pub seekToTimestamp:  qt_method!(fn(&mut self, timestamp: f64, exact: bool)),
+
     pub setFrameRate: qt_method!(fn(&mut self, fps: f64)),
 
     pub url:    qt_property!(QUrl; CONST),
@@ -113,8 +116,11 @@ impl MDKVideoItem {
     pub fn setPlaybackRate(&mut self, rate: f32) { self.m_player.set_playback_rate(rate); self.forceRedraw(); }
     pub fn getPlaybackRate(&self) -> f32 { self.m_player.get_playback_rate() }
 
-    pub fn setCurrentFrame(&mut self, frame: i64)  { self.m_player.seek_to_frame(frame, self.currentFrame); self.forceRedraw(); }
-    pub fn setTimestamp(&mut self, timestamp: f64) { self.m_player.seek_to_timestamp(timestamp); self.forceRedraw(); }
+    pub fn setCurrentFrame(&mut self, frame: i64)  { self.m_player.seek_to_frame(frame, self.currentFrame, false); self.forceRedraw(); }
+    pub fn setTimestamp(&mut self, timestamp: f64) { self.m_player.seek_to_timestamp(timestamp, false); self.forceRedraw(); }
+
+    pub fn seekToFrame(&mut self, frame: i64, exact: bool)  { self.m_player.seek_to_frame(frame, self.currentFrame, exact); self.forceRedraw(); }
+    pub fn seekToTimestamp(&mut self, timestamp: f64, exact: bool) { self.m_player.seek_to_timestamp(timestamp, exact); self.forceRedraw(); }
 
     pub fn setRotation(&mut self, v: i32) { self.m_player.set_rotation(v); self.forceRedraw(); }
     pub fn getRotation(&self) -> i32 { self.m_player.get_rotation() }
