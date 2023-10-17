@@ -116,8 +116,8 @@ impl MDKVideoItem {
     pub fn setPlaybackRate(&mut self, rate: f32) { self.m_player.set_playback_rate(rate); self.forceRedraw(); }
     pub fn getPlaybackRate(&self) -> f32 { self.m_player.get_playback_rate() }
 
-    pub fn setCurrentFrame(&mut self, frame: i64)  { self.m_player.seek_to_frame(frame, self.currentFrame, false); self.forceRedraw(); }
-    pub fn setTimestamp(&mut self, timestamp: f64) { self.m_player.seek_to_timestamp(timestamp, false); self.forceRedraw(); }
+    pub fn setCurrentFrame(&mut self, frame: i64)  { self.m_player.seek_to_frame(frame, self.currentFrame, true); self.forceRedraw(); }
+    pub fn setTimestamp(&mut self, timestamp: f64) { self.m_player.seek_to_timestamp(timestamp, true); self.forceRedraw(); }
 
     pub fn seekToFrame(&mut self, frame: i64, exact: bool)  { self.m_player.seek_to_frame(frame, self.currentFrame, exact); self.forceRedraw(); }
     pub fn seekToTimestamp(&mut self, timestamp: f64, exact: bool) { self.m_player.seek_to_timestamp(timestamp, exact); self.forceRedraw(); }
