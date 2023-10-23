@@ -469,18 +469,20 @@ void MDKPlayer::seekToTimestamp(float timestampMs, bool exact) {
     forceRedraw();
 }
 
+void MDKPlayer::seekToFrameDelta(int64_t frameDelta) {
+    if (!m_videoLoaded || !m_player) return;
+
+    m_player->seek(frameDelta, mdk::SeekFlag::FromNow | mdk::SeekFlag::Frame);
+    forceRedraw();
+}
+
 void MDKPlayer::seekToFrame(int64_t frame, int64_t currentFrame, bool exact) {
     if (!m_videoLoaded || !m_player) return;
 
-    auto delta = frame - currentFrame;
-    if (delta >= -10 && delta <= 10) {
-        m_player->seek(delta, mdk::SeekFlag::FromNow | mdk::SeekFlag::Frame);
-    } else {
-        auto md = m_player->mediaInfo();
-        if (!md.video.empty()) {
-            auto v = md.video[0];
-            seekToTimestamp((frame / v.codec.frame_rate) * 1000.0, exact);
-        }
+    auto md = m_player->mediaInfo();
+    if (!md.video.empty()) {
+        auto v = md.video[0];
+        seekToTimestamp((frame / v.codec.frame_rate) * 1000.0, exact);
     }
     forceRedraw();
 }

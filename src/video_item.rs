@@ -44,6 +44,7 @@ pub struct MDKVideoItem {
     pub timestampChanged: qt_signal!(),
 
     pub seekToFrame:      qt_method!(fn(&mut self, frame: i64, exact: bool)),
+    pub seekToFrameDelta: qt_method!(fn(&mut self, frame_delta: i64)),
     pub seekToTimestamp:  qt_method!(fn(&mut self, timestamp: f64, exact: bool)),
 
     pub setFrameRate: qt_method!(fn(&mut self, fps: f64)),
@@ -119,7 +120,8 @@ impl MDKVideoItem {
     pub fn setCurrentFrame(&mut self, frame: i64)  { self.m_player.seek_to_frame(frame, self.currentFrame, true); self.forceRedraw(); }
     pub fn setTimestamp(&mut self, timestamp: f64) { self.m_player.seek_to_timestamp(timestamp, true); self.forceRedraw(); }
 
-    pub fn seekToFrame(&mut self, frame: i64, exact: bool)  { self.m_player.seek_to_frame(frame, self.currentFrame, exact); self.forceRedraw(); }
+    pub fn seekToFrame(&mut self, frame: i64, exact: bool) { self.m_player.seek_to_frame(frame, self.currentFrame, exact); self.forceRedraw(); }
+    pub fn seekToFrameDelta(&mut self, frame_delta: i64) { self.m_player.seek_to_frame_delta(frame_delta); self.forceRedraw(); }
     pub fn seekToTimestamp(&mut self, timestamp: f64, exact: bool) { self.m_player.seek_to_timestamp(timestamp, exact); self.forceRedraw(); }
 
     pub fn setRotation(&mut self, v: i32) { self.m_player.set_rotation(v); self.forceRedraw(); }

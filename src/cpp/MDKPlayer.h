@@ -59,6 +59,7 @@ public:
 
     void seekToTimestamp(float timestampMs, bool exact = true);
     void seekToFrame(int64_t frame, int64_t currentFrame, bool exact = true);
+    void seekToFrameDelta(int64_t frameDelta);
 
     void setFrameRate(float fps);
 

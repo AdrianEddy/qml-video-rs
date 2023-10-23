@@ -36,6 +36,11 @@ impl MDKPlayerWrapper {
             self->mdkplayer->seekToFrame(frame, current_frame, exact);
         })
     }
+    pub fn seek_to_frame_delta(&mut self, frame_delta: i64) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *", frame_delta as "int64_t"] {
+            self->mdkplayer->seekToFrameDelta(frame_delta);
+        })
+    }
 
     pub fn set_url(&mut self, url: QUrl, custom_decoder: QString) {
         cpp!(unsafe [self as "MDKPlayerWrapper *", url as "QUrl", custom_decoder as "QString"] {
