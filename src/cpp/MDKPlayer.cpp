@@ -534,18 +534,20 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
         const_cast<std::vector<std::pair<uint64_t, uint64_t>> &>(ranges).push_back({ 0, UINT64_MAX });
     }
 
-    auto range_id = new uint(0);
+    auto range_id = std::make_shared<uint>(0);
+    auto finished = std::make_shared<bool>(false);
 
-    player->onFrame<mdk::VideoFrame>([cb, width, height, id, range_id, yuv, ranges, this](mdk::VideoFrame &v, int) -> int {
+    player->onFrame<mdk::VideoFrame>([cb, width, height, id, range_id = std::move(range_id), finished = std::move(finished), yuv, ranges, this](mdk::VideoFrame &v, int) -> int {
+        if (*finished) return 0;
         if (!v || v.timestamp() == mdk::TimestampEOS) { // AOT frame(1st frame, seek end 1st frame) is not valid, but format is valid. eof frame format is invalid
             cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
             auto ptr = m_processingPlayers[id].release();
-            QTimer::singleShot(1, [ptr] {
+            std::thread([ptr] {
                 ptr->set(mdk::PlaybackState::Stopped);
                 ptr->waitFor(mdk::PlaybackState::Stopped);
                 delete ptr;
-            });
-            delete range_id;
+            }).detach();
+            *finished = true;
             return 0;
         }
         if (!v.format()) {
@@ -565,12 +567,12 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
             ptr->set(mdk::PlaybackState::Paused);
             ptr->waitFor(mdk::PlaybackState::Paused);
             cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            QTimer::singleShot(1, [ptr] {
+            std::thread([ptr] {
                 ptr->set(mdk::PlaybackState::Stopped);
                 ptr->waitFor(mdk::PlaybackState::Stopped);
                 delete ptr;
-            });
-            delete range_id;
+            }).detach();
+            *finished = true;
             return 0;
         }
 
@@ -625,12 +627,12 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
                 pptr->set(mdk::PlaybackState::Paused);
                 pptr->waitFor(mdk::PlaybackState::Paused);
                 cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-                QTimer::singleShot(1, [pptr] {
+                std::thread([pptr] {
                     pptr->set(mdk::PlaybackState::Stopped);
                     pptr->waitFor(mdk::PlaybackState::Stopped);
                     delete pptr;
-                });
-                delete range_id;
+                }).detach();
+                *finished = true;
                 return 0;
             }
         }
