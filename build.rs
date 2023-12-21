@@ -84,7 +84,7 @@ fn main() {
             // std::fs::copy(format!("{}/lib/arm64-v8a/libqtav-mediacodec.so", path), format!("{}/../../../libqtav-mediacodec.so", env::var("OUT_DIR").unwrap())).unwrap();
         }
         if target_os == "linux" {
-            let _ = std::fs::copy(format!("{}/lib/amd64/libffmpeg.so.5", path), format!("{}/../../../libffmpeg.so.5", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/lib/amd64/libffmpeg.so.6", path), format!("{}/../../../libffmpeg.so.6", env::var("OUT_DIR").unwrap()));
             std::fs::copy(format!("{}/lib/amd64/libmdk.so.0", path), format!("{}/../../../libmdk.so.0", env::var("OUT_DIR").unwrap())).unwrap();
             let _ = std::fs::copy(format!("{}/lib/amd64/libmdk-braw.so", path), format!("{}/../../../libmdk-braw.so", env::var("OUT_DIR").unwrap()));
             let _ = std::fs::copy(format!("{}/lib/amd64/libmdk-r3d.so", path), format!("{}/../../../libmdk-r3d.so", env::var("OUT_DIR").unwrap()));
