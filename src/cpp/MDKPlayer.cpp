@@ -189,7 +189,7 @@ void MDKPlayer::setupPlayer() {
                 obj.insert(QString::fromUtf8(x.first.c_str(), x.first.size()), QString::fromUtf8(x.second.c_str(), x.second.size()));
             }
             QMetaObject::invokeMethod(m_item, "metadataLoaded", Qt::QueuedConnection, Q_ARG(QJsonObject, obj));
-            m_firstFrameLoaded = evt.detail == "1st_frame";
+            m_firstFrameLoaded = true;
         }
         qDebug2("m_player->onEvent") << QString::fromUtf8(evt.category.c_str(), evt.category.size()) << QString::fromUtf8(evt.detail.c_str(), evt.detail.size());
         return true;
@@ -268,6 +268,7 @@ void MDKPlayer::setupPlayer() {
         return 0;
     });*/
 
+    sync(m_size, true);
     forceRedraw();
 }
 
