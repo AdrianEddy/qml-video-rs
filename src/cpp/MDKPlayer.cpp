@@ -268,7 +268,10 @@ void MDKPlayer::setupPlayer() {
         return 0;
     });*/
 
-    sync(m_size, true);
+    if (m_size.width() > 0 && m_size.height() > 0) {
+        m_player->setVideoSurfaceSize(m_size.width(), m_size.height());
+        m_syncNext = true;
+    }
     forceRedraw();
 }
 
