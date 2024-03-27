@@ -130,10 +130,16 @@ void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
     }
 
     QString path = url.toEncoded() + additionalUrl;
-    if (url.scheme() == "file") {
-        path = url.toLocalFile() + additionalUrl;
-    } else if (path.contains(' ')) {
-        path.replace(' ', "%20");
+
+    // Workaround because avdevice:// is not a valid URL according to QUrl
+    if (path.startsWith("http://avdevice/")) {
+        path = "avdevice://" + path.mid(strlen("http://avdevice/")).replace("%20", " ");
+    } else {
+        if (url.scheme() == "file") {
+            path = url.toLocalFile() + additionalUrl;
+        } else if (path.contains(' ')) {
+            path.replace(' ', "%20");
+        }
     }
     qDebug2("setUrl") << "Final url:" << path;
     m_player->setMedia(qUtf8Printable(path));
