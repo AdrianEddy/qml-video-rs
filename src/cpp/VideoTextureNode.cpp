@@ -5,32 +5,30 @@
 using namespace mdk;
 
 QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize &size) {
+    SetGlobalOption("sdr.white", 100.0f);
     auto sgrc = QQuickItemPrivate::get(m_item)->sceneGraphRenderContext();
     auto rhi = sgrc->rhi();
 
     m_texture = rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource);
     if (!m_texture->create()) {
-        releaseResources();
+        delete m_texture;
         return nullptr;
     }
     m_proj = rhi->clipSpaceCorrMatrix();
 
     QRhiColorAttachment color0(m_texture);
-    m_rt = rhi->newTextureRenderTarget({color0});
+    m_rt.reset(rhi->newTextureRenderTarget({color0}));
     if (!m_rt) {
-        releaseResources();
         return nullptr;
     }
 
-    m_rtRp = m_rt->newCompatibleRenderPassDescriptor();
+    m_rtRp.reset(m_rt->newCompatibleRenderPassDescriptor());
     if (!m_rtRp) {
-        releaseResources();
         return nullptr;
     }
 
-    m_rt->setRenderPassDescriptor(m_rtRp);
+    m_rt->setRenderPassDescriptor(m_rtRp.get());
     if (!m_rt->create()) {
-        releaseResources();
         return nullptr;
     }
 
@@ -40,13 +38,15 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
             qDebug2("VideoTextureNodePriv::createTexture") << "QSGRendererInterface::OpenGL";
 #if QT_CONFIG(opengl)
             m_tx = QSGImageNode::TextureCoordinatesTransformFlag::MirrorVertically;
-            auto glrt = static_cast<QGles2TextureRenderTarget*>(m_rt);
+            auto glrt = static_cast<QGles2TextureRenderTarget*>(m_rt.get());
             GLRenderAPI ra;
             ra.fbo = glrt->framebuffer;
             player->setRenderAPI(&ra);
-            auto tex = GLuint(m_texture->nativeTexture().object);
-            if (tex)
-                return QNativeInterface::QSGOpenGLTexture::fromNative(tex, m_window, size, QQuickWindow::TextureHasAlphaChannel);
+            #if (QT_VERSION < QT_VERSION_CHECK(6, 6, 0))
+                auto tex = GLuint(m_texture->nativeTexture().object);
+                if (tex)
+                    return QNativeInterface::QSGOpenGLTexture::fromNative(tex, m_window, size, QQuickWindow::TextureHasAlphaChannel);
+            # endif
 #endif // if QT_CONFIG(opengl)
         } break;
         case QSGRendererInterface::MetalRhi: {
@@ -59,24 +59,27 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
             ra.texture = reinterpret_cast<const void*>(quintptr(m_texture->nativeTexture().object)); // 5.15+
             ra.device = dev;
             ra.cmdQueue = rif->getResource(m_window, QSGRendererInterface::CommandQueueResource);
+            # if (QT_VERSION >= QT_VERSION_CHECK(6, 6, 0))
+                auto sc = (QRhiSwapChain*)rif->getResource(m_window, QSGRendererInterface::RhiSwapchainResource);
+                ra.layer = sc->proxyData().reserved[0];
+            # endif
             player->setRenderAPI(&ra);
-            if (ra.texture)
-                return QNativeInterface::QSGMetalTexture::fromNative((__bridge id<MTLTexture>)ra.texture, m_window, size, QQuickWindow::TextureHasAlphaChannel);
+            #if (QT_VERSION < QT_VERSION_CHECK(6, 6, 0))
+                if (ra.texture)
+                    return QNativeInterface::QSGMetalTexture::fromNative((__bridge id<MTLTexture>)ra.texture, m_window, size, QQuickWindow::TextureHasAlphaChannel);
+            # endif
 #endif // (__APPLE__+0)
         } break;
 #if (_WIN32+0)
         case QSGRendererInterface::Direct3D11Rhi: {
             qDebug2("VideoTextureNodePriv::createTexture") << "QSGRendererInterface::Direct3D11";
-            // m_workaroundTexture = rhi->newTexture(QRhiTexture::RGBA8, QSize(16, 16), 1, QRhiTexture::UsedAsTransferSource);
-            // if (!m_workaroundTexture->create()) {
-            //     releaseResources();
-            //     return nullptr;
-            // }
             D3D11RenderAPI ra;
             ra.rtv = reinterpret_cast<ID3D11DeviceChild*>(quintptr(m_texture->nativeTexture().object));
             player->setRenderAPI(&ra);
-            if (ra.rtv)
-                return QNativeInterface::QSGD3D11Texture::fromNative(ra.rtv, m_window, size, QQuickWindow::TextureHasAlphaChannel);
+            #if (QT_VERSION < QT_VERSION_CHECK(6, 6, 0))
+                if (ra.rtv)
+                    return QNativeInterface::QSGD3D11Texture::fromNative(ra.rtv, m_window, size, QQuickWindow::TextureHasAlphaChannel);
+            # endif
         } break;
 # if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
         case QSGRendererInterface::Direct3D12: {
@@ -84,8 +87,7 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
             D3D12RenderAPI ra;
             ra.cmdQueue = reinterpret_cast<ID3D12CommandQueue*>(rif->getResource(m_window, QSGRendererInterface::CommandQueueResource));
             ra.rt = reinterpret_cast<ID3D12Resource*>(quintptr(m_texture->nativeTexture().object));
-            player->setRenderAPI(&ra, this);
-            return QNativeInterface::QSGD3D12Texture::fromNative(ra.rt, m_texture->nativeTexture().layout, m_window, size, QQuickWindow::TextureHasAlphaChannel);
+            player->setRenderAPI(&ra);
         } break;
 # endif
 #endif // (_WIN32)
@@ -99,9 +101,10 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
             ra.rt = VkImage(m_texture->nativeTexture().object);
             ra.renderTargetInfo = [](void* opaque, int* w, int* h, VkFormat* fmt, VkImageLayout* layout) -> int {
                 auto node = static_cast<VideoTextureNodePriv*>(opaque);
+                const auto tf = node->m_texture->format();
                 *w = node->m_size.width();
                 *h = node->m_size.height();
-                *fmt = VK_FORMAT_R8G8B8A8_UNORM;
+                *fmt = tf == QRhiTexture::RGBA16F ? VK_FORMAT_R16G16B16A16_SFLOAT : tf == QRhiTexture::RGB10A2 ? VK_FORMAT_A2B10G10R10_UNORM_PACK32 : VK_FORMAT_R8G8B8A8_UNORM;
                 *layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                 return 1;
             };
@@ -112,14 +115,20 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
                 return cmdBuf;
             };
             player->setRenderAPI(&ra);
+# if (QT_VERSION < QT_VERSION_CHECK(6, 6, 0))
             if (ra.rt)
                 return QNativeInterface::QSGVulkanTexture::fromNative(ra.rt, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_window, size, QQuickWindow::TextureHasAlphaChannel);
+# endif // (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
 #else
             qDebug2("VideoTextureNodePriv::createTexture") << "Vulkan support not compiled";
 #endif // (VK_VERSION_1_0+0) && QT_CONFIG(vulkan)
         } break;
         default: break;
     }
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 6, 0))
+    // the only way to create sg texture with a correct format
+    return m_window->createTextureFromRhiTexture(m_texture, QQuickWindow::TextureHasAlphaChannel);
+#endif
     return nullptr;
 }
 
@@ -178,21 +187,11 @@ bool VideoTextureNodePriv::fromImage(const QImage &img, bool normalized) {
 }
 
 void VideoTextureNodePriv::releaseResources() {
-    if (m_rt) {
-        m_rt->destroy();
-        delete m_rt;
-        m_rt = nullptr;
-    }
-    if (m_rtRp) {
-        m_rtRp->destroy();
-        delete m_rtRp;
-        m_rtRp = nullptr;
-    }
-    if (m_texture) {
+    /*if (m_texture) {
         m_texture->destroy();
         delete m_texture;
         m_texture = nullptr;
-    }
+    }*/
     // if (m_workaroundTexture) {
     //     m_workaroundTexture->destroy();
     //     delete m_workaroundTexture;

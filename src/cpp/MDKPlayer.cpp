@@ -166,6 +166,7 @@ void MDKPlayer::setupNode(QSGImageNode *node, QQuickItem *item) {
     m_node = node;
     m_item = item;
     m_window = item->window();
+    node->setOwnsTexture(true);
     if (!m_pendingUrl.isEmpty()) {
         setUrl(m_pendingUrl, m_pendingCustomDecoder);
         m_pendingUrl = QUrl();
@@ -294,11 +295,11 @@ void MDKPlayer::windowBeforeRendering() {
     auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
     auto cb = context->currentFrameCommandBuffer();
 
-    bool doRenderPass = m_rt && m_window->rendererInterface()->graphicsApi() != QSGRendererInterface::MetalRhi;
+    bool doRenderPass = m_rt && m_window->rendererInterface()->graphicsApi() != QSGRendererInterface::MetalRhi && m_window->rendererInterface()->graphicsApi() != QSGRendererInterface::Direct3D12;
 
     if (doRenderPass) {
         QRhiResourceUpdateBatch *u = context->rhi()->nextResourceUpdateBatch();
-        cb->beginPass(m_rt, QColor(Qt::black), { 1.0f, 0 }, u, QRhiCommandBuffer::ExternalContent);
+        cb->beginPass(m_rt.get(), QColor(Qt::black), { 1.0f, 0 }, u, QRhiCommandBuffer::ExternalContent);
     }
 
     cb->beginExternal();
@@ -730,10 +731,10 @@ QRhiTexture *MDKPlayer::rhiTexture() {
     return m_texture;
 }
 QRhiTextureRenderTarget *MDKPlayer::rhiRenderTarget() {
-    return m_rt;
+    return m_rt.get();
 }
 QRhiRenderPassDescriptor *MDKPlayer::rhiRenderPassDescriptor() {
-    return m_rtRp;
+    return m_rtRp.get();
 }
 QQuickWindow *MDKPlayer::qmlWindow() {
     return m_window;

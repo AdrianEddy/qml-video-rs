@@ -51,8 +51,8 @@ public:
 
     QRhiTexture *m_texture{nullptr};
     QRhiTexture *m_workaroundTexture{nullptr};
-    QRhiTextureRenderTarget *m_rt{nullptr};
-    QRhiRenderPassDescriptor *m_rtRp{nullptr};
+    std::unique_ptr<QRhiTextureRenderTarget> m_rt;
+    std::unique_ptr<QRhiRenderPassDescriptor> m_rtRp;
 
     QSGImageNode::TextureCoordinatesTransformMode m_tx{QSGImageNode::TextureCoordinatesTransformFlag::NoTransform};
     QQuickWindow *m_window{nullptr};
