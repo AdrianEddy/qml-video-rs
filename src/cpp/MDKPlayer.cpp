@@ -295,7 +295,11 @@ void MDKPlayer::windowBeforeRendering() {
     auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
     auto cb = context->currentFrameCommandBuffer();
 
-    bool doRenderPass = m_rt && m_window->rendererInterface()->graphicsApi() != QSGRendererInterface::MetalRhi && m_window->rendererInterface()->graphicsApi() != QSGRendererInterface::Direct3D12;
+    bool doRenderPass = m_rt && m_window->rendererInterface()->graphicsApi() != QSGRendererInterface::MetalRhi
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+        && m_window->rendererInterface()->graphicsApi() != QSGRendererInterface::Direct3D12
+#endif
+    ;
 
     if (doRenderPass) {
         QRhiResourceUpdateBatch *u = context->rhi()->nextResourceUpdateBatch();
