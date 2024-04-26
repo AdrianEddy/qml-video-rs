@@ -17,6 +17,7 @@ cpp! {{
     #include <private/qquickshadereffect_p.h>
     #ifdef Q_OS_ANDROID
     #   include <QJniEnvironment>
+    #   include <QtCore/private/qandroidextras_p.h>
     #endif
 }}
 
@@ -279,7 +280,9 @@ impl QQuickItem for MDKVideoItem {
             obj->setFlag(QQuickItem::ItemHasContents);
 
             #ifdef Q_OS_ANDROID
-                SetGlobalOption("jvm", QJniEnvironment::javaVM());
+                SetGlobalOption("JavaVM", QJniEnvironment::javaVM());
+                SetGlobalOption("android.app.Application", QNativeInterface::QAndroidApplication::context());
+                SetGlobalOption("android.content.Context", QNativeInterface::QAndroidApplication::context());
             #endif
         });
     }
