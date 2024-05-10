@@ -327,7 +327,7 @@ void MDKPlayer::windowBeforeRendering() {
     bool processed = false;
     if (m_firstFrameLoaded.load()) {
         if (!m_videoLoaded || !m_player) return;
-        if (m_processTexture) {
+        if (m_processTexture && m_texture) {
             uint64_t backend_id = 0;
             uint64_t ptr1 = m_texture->nativeTexture().object;
             uint64_t ptr2 = 0;
