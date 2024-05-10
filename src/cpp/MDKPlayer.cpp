@@ -188,7 +188,7 @@ void MDKPlayer::setupPlayer() {
     m_player->setProperty("continue_at_end", "1");
     m_player->setBufferRange(0);
     m_player->onEvent([this](const mdk::MediaEvent &evt) -> bool {
-        if (evt.detail == "1st_frame") {
+        if (evt.detail == "size") {
             auto md = m_player->mediaInfo();
 
             QJsonObject obj;
