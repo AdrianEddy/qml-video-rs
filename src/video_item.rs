@@ -281,11 +281,8 @@ impl QQuickItem for MDKVideoItem {
 
             #ifdef Q_OS_ANDROID
                 SetGlobalOption("JavaVM", QJniEnvironment::javaVM());
-                #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-                    jobject ctx = QNativeInterface::QAndroidApplication::context().object<jobject>();
-                #else
-                    jobject ctx = QNativeInterface::QAndroidApplication::context();
-                #endif
+                extern Q_CORE_EXPORT jobject qt_androidActivity();
+                jobject ctx = qt_androidActivity();
                 SetGlobalOption("android.app.Application", ctx);
                 SetGlobalOption("android.content.Context", ctx);
             #endif
