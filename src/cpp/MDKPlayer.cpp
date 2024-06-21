@@ -425,7 +425,7 @@ void MDKPlayer::windowBeforeRendering() {
     m_renderedPosition = m_playerPosition;
     // printf("render: %.3f\n", double(t.nsecsElapsed()) / 1000000.0);
 
-    QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, timestamp * 1000.0));
+    QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, timestamp * 1000.0), Q_ARG(int, frame));
 }
 
 void MDKPlayer::sync(QSize newSize, bool force) {

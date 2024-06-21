@@ -76,7 +76,7 @@ pub struct MDKVideoItem {
 
     pub metadataLoaded: qt_signal!(md: QJsonObject),
 
-    pub frameRendered: qt_method!(fn(&mut self, timestamp: f64)),
+    pub frameRendered: qt_method!(fn(&mut self, timestamp: f64, frame: i32)),
     pub videoLoaded:   qt_method!(fn(&mut self, duration: f64, frameCount: i64, frameRate: f64, width: u32, height: u32)),
     pub stateChanged:  qt_method!(fn(&mut self, state: i32)),
 
@@ -147,13 +147,12 @@ impl MDKVideoItem {
     pub fn setVolume(&mut self, v: f32) { self.m_player.set_volume(v); self.volumeChanged(); }
     pub fn getVolume(&self) -> f32 { self.m_player.get_volume() }
 
-    fn frameRendered(&mut self, ts: f64) {
+    fn frameRendered(&mut self, ts: f64, frame: i32) {
         let nts = ts.max(0.0);
-        let ncf = ((nts / 1000.0) * self.frameRate).ceil() as i64; // ((self.timestamp / self.duration) * self.frameCount as f64).round().max(0.0) as i64;
 
-        if nts != self.timestamp || ncf != self.currentFrame {
+        if nts != self.timestamp || frame as i64 != self.currentFrame {
             self.timestamp = nts;
-            self.currentFrame = ncf;
+            self.currentFrame = frame as i64;
 
             self.timestampChanged();
             self.currentFrameChanged();
