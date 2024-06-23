@@ -310,11 +310,15 @@ void MDKPlayer::windowBeforeRendering() {
     double timestamp = m_player->renderVideo();
     cb->endExternal();
 
-    m_playerPosition = timestamp * 1000;
-
     if (doRenderPass) {
         cb->endPass();
     }
+
+    if (timestamp < 0) {
+        return;
+    }
+
+    m_playerPosition = timestamp * 1000;
 
     double fps = m_fps;
     if (m_overrideFps > 0.0) {
