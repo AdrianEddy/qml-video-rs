@@ -44,12 +44,16 @@ fn main() {
     #[cfg(not(feature = "mdk-nightly"))]
     let nightly = "";
 
-    let sdk: HashMap<&str, (String, &str, &str, &str)> = vec![
-        ("windows",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-windows-desktop-clang.7z?viasf=1", nightly),  "lib/x64/",           "mdk.lib",    "include/")),
-        ("linux",    (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-linux.tar.xz?viasf=1", nightly),              "lib/amd64/",         "libmdk.so",  "include/")),
-        ("macos",    (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-macOS.tar.xz?viasf=1", nightly),              "lib/mdk.framework/", "mdk",        "include/")),
-        ("android",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-android.7z?viasf=1", nightly),                "lib/arm64-v8a/",     "libmdk.so",  "include/")),
-        ("ios",      (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-iOS.tar.xz?viasf=1", nightly),                "lib/mdk.framework/", "mdk",        "include/")),
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+    let arch_win = if target_arch == "aarch64" { "arm64" } else { "x64" };
+    let arch_lnx = if target_arch == "aarch64" { "arm64" } else { "amd64" };
+
+    let sdk: HashMap<&str, (String, String, &str, &str)> = vec![
+        ("windows",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-windows-desktop-clang.7z?viasf=1", nightly),  format!("lib/{arch_win}/"),    "mdk.lib",    "include/")),
+        ("linux",    (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-linux.tar.xz?viasf=1", nightly),              format!("lib/{arch_lnx}/"),    "libmdk.so",  "include/")),
+        ("macos",    (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-macOS.tar.xz?viasf=1", nightly),              format!("lib/mdk.framework/"), "mdk",        "include/")),
+        ("android",  (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-android.7z?viasf=1", nightly),                format!("lib/arm64-v8a/"),     "libmdk.so",  "include/")),
+        ("ios",      (format!("https://master.dl.sourceforge.net/project/mdk-sdk/{}mdk-sdk-iOS.tar.xz?viasf=1", nightly),                format!("lib/mdk.framework/"), "mdk",        "include/")),
     ].into_iter().collect();
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
@@ -69,14 +73,14 @@ fn main() {
         }
         if target_os == "windows" {
             println!("cargo:rustc-link-lib=dxguid");
-            std::fs::copy(format!("{}/bin/x64/mdk.dll", path), format!("{}/../../../mdk.dll", env::var("OUT_DIR").unwrap())).unwrap();
-            let _ = std::fs::copy(format!("{}/bin/x64/ffmpeg-5.dll", path), format!("{}/../../../ffmpeg-5.dll", env::var("OUT_DIR").unwrap()));
-            let _ = std::fs::copy(format!("{}/bin/x64/mdk-braw.dll", path), format!("{}/../../../mdk-braw.dll", env::var("OUT_DIR").unwrap()));
-            let _ = std::fs::copy(format!("{}/bin/x64/mdk-r3d.dll", path), format!("{}/../../../mdk-r3d.dll", env::var("OUT_DIR").unwrap()));
+            std::fs::copy(format!("{}/bin/{arch_win}/mdk.dll", path), format!("{}/../../../mdk.dll", env::var("OUT_DIR").unwrap())).unwrap();
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/ffmpeg-5.dll", path), format!("{}/../../../ffmpeg-5.dll", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-braw.dll", path), format!("{}/../../../mdk-braw.dll", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-r3d.dll", path), format!("{}/../../../mdk-r3d.dll", env::var("OUT_DIR").unwrap()));
 
-            let _ = std::fs::copy(format!("{}/bin/x64/mdk.pdb", path), format!("{}/../../../mdk.pdb", env::var("OUT_DIR").unwrap())).unwrap();
-            let _ = std::fs::copy(format!("{}/bin/x64/mdk-braw.pdb", path), format!("{}/../../../mdk-braw.pdb", env::var("OUT_DIR").unwrap()));
-            let _ = std::fs::copy(format!("{}/bin/x64/mdk-r3d.pdb", path), format!("{}/../../../mdk-r3d.pdb", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk.pdb", path), format!("{}/../../../mdk.pdb", env::var("OUT_DIR").unwrap())).unwrap();
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-braw.pdb", path), format!("{}/../../../mdk-braw.pdb", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-r3d.pdb", path), format!("{}/../../../mdk-r3d.pdb", env::var("OUT_DIR").unwrap()));
         }
         if target_os == "android" {
             std::fs::copy(format!("{}/lib/arm64-v8a/libmdk.so", path), format!("{}/../../../libmdk.so", env::var("OUT_DIR").unwrap())).unwrap();
@@ -85,10 +89,10 @@ fn main() {
             // std::fs::copy(format!("{}/lib/arm64-v8a/libqtav-mediacodec.so", path), format!("{}/../../../libqtav-mediacodec.so", env::var("OUT_DIR").unwrap())).unwrap();
         }
         if target_os == "linux" {
-            let _ = std::fs::copy(format!("{}/lib/amd64/libffmpeg.so.6", path), format!("{}/../../../libffmpeg.so.6", env::var("OUT_DIR").unwrap()));
-            std::fs::copy(format!("{}/lib/amd64/libmdk.so.0", path), format!("{}/../../../libmdk.so.0", env::var("OUT_DIR").unwrap())).unwrap();
-            let _ = std::fs::copy(format!("{}/lib/amd64/libmdk-braw.so", path), format!("{}/../../../libmdk-braw.so", env::var("OUT_DIR").unwrap()));
-            let _ = std::fs::copy(format!("{}/lib/amd64/libmdk-r3d.so", path), format!("{}/../../../libmdk-r3d.so", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libffmpeg.so.6", path), format!("{}/../../../libffmpeg.so.6", env::var("OUT_DIR").unwrap()));
+            std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk.so.0", path), format!("{}/../../../libmdk.so.0", env::var("OUT_DIR").unwrap())).unwrap();
+            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-braw.so", path), format!("{}/../../../libmdk-braw.so", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-r3d.so", path), format!("{}/../../../libmdk-r3d.so", env::var("OUT_DIR").unwrap()));
         }
         config.include(format!("{}{}", path, entry.3));
     } else {
@@ -133,7 +137,7 @@ fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error
                 Command::new("7z").current_dir(&out_dir).args(&["x", "-y", "mdk-sdk.tar"]).status()?;
             }
             std::fs::remove_file(format!("{}/mdk-sdk.tar", out_dir))?;
-        }
+        } 
     }
 
     Ok(format!("{}/mdk-sdk/", out_dir))

@@ -127,9 +127,9 @@ impl MDKPlayerWrapper {
         let func: Box<dyn Fn(i32, &str)> = Box::new(cb);
         let cb_ptr = Box::into_raw(func);
 
-        #[cfg(target_os = "android")]
+        #[cfg(any(target_os = "android", all(target_os = "linux", target_arch = "aarch64")))]
         type TextPtr = *const u8;
-        #[cfg(not(target_os = "android"))]
+        #[cfg(not(any(target_os = "android", all(target_os = "linux", target_arch = "aarch64"))))]
         type TextPtr = *mut i8;
 
         cpp!(unsafe [cb_ptr as "TraitObject2"] {
