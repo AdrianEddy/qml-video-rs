@@ -47,7 +47,7 @@ void MDKPlayer::initPlayer() {
     } else {
         m_player->setDecoders(mdk::MediaType::Video, {
     #if (__APPLE__+0)
-        "VT",
+        "VT:duration=0",
     #elif (__ANDROID__+0)
         "AMediaCodec:java=0:copy=0:surface=1:async=0:image=0",
     #elif (_WIN32+0)

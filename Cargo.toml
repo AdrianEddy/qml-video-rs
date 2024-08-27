@@ -8,8 +8,8 @@ readme = "README.md"
 build = "build.rs"
 
 [dependencies]
-qmetaobject = { version = "0.2.9", default-features = false, features = ["log"] }
-qttypes     = { version = "0.2.9", default-features = false, features = ["required", "qtquick", "qtquickcontrols2"] }
+qmetaobject = { version = "0.2.10", default-features = false, features = ["log"] }
+qttypes     = { version = "0.2.10", default-features = false, features = ["required", "qtquick", "qtquickcontrols2"] }
 cstr = "0.2"
 cpp = "0.5"
 
@@ -19,4 +19,4 @@ mdk-nightly = []
 
 [build-dependencies]
 cpp_build = "0.5"
-ureq = "2.8"
+ureq = "2.10"
