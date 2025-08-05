@@ -123,7 +123,7 @@ fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error
     if !Path::new(&format!("{}/mdk-sdk/{}", out_dir, check)).exists() {
         let ext = if url.contains(".tar.xz") { ".tar.xz" } else { ".7z" };
         {
-            let mut reader = ureq::get(url).call().map_err(|_| std::io::ErrorKind::Other)?.into_reader();
+            let mut reader = ureq::get(url).call().map(|x| x.into_body().into_reader()).map_err(|_| std::io::ErrorKind::Other)?;
             let mut file = File::create(format!("{}/mdk-sdk{}", out_dir, ext))?;
             std::io::copy(&mut reader, &mut file)?;
         }
@@ -137,7 +137,7 @@ fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error
                 Command::new("7z").current_dir(&out_dir).args(&["x", "-y", "mdk-sdk.tar"]).status()?;
             }
             std::fs::remove_file(format!("{}/mdk-sdk.tar", out_dir))?;
-        } 
+        }
     }
 
     Ok(format!("{}/mdk-sdk/", out_dir))
