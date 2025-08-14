@@ -62,7 +62,7 @@ void MDKPlayer::initPlayer() {
         "VDPAU",
         "VAAPI:sw_fallback=1",
     #endif
-        "BRAW:gpu=auto:scale=1920x1080",
+        "BRAW:gpu=auto:copy=1:scale=1920x1080",
         "R3D:gpu=auto:scale=1920x1080",
         "FFmpeg"});
     }
