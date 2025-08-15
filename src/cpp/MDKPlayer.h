@@ -72,6 +72,7 @@ public:
     int getRotation();
 
     void initProcessingPlayer(uint64_t id, uint64_t width, uint64_t height, bool yuv, std::string custom_decoder, const std::vector<std::pair<uint64_t, uint64_t>> &ranges, VideoProcessCb &&cb);
+    void stopProcessingPlayer(uint64_t id);
 
     std::map<std::string, std::string> getMediaInfo(const MediaInfo &mi);
 

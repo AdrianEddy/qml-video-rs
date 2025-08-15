@@ -533,6 +533,13 @@ int MDKPlayer::getRotation() {
     return 0;
 }
 
+void MDKPlayer::stopProcessingPlayer(uint64_t id) {
+    if (m_processingPlayers.find(id) == m_processingPlayers.end()) return;
+    m_processingPlayers[id]->set(mdk::PlaybackState::Stopped);
+    m_processingPlayers[id]->waitFor(mdk::PlaybackState::Stopped);
+    //m_processingPlayers.erase(id);
+}
+
 void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t height, bool yuv, std::string custom_decoder, const std::vector<std::pair<uint64_t, uint64_t>> &ranges, VideoProcessCb &&cb) { // ms
     m_processingPlayers[id] = std::make_unique<mdk::Player>();
     auto player = m_processingPlayers[id].get();
@@ -560,12 +567,6 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
         if (*finished) return 0;
         if (!v || v.timestamp() == mdk::TimestampEOS) { // AOT frame(1st frame, seek end 1st frame) is not valid, but format is valid. eof frame format is invalid
             cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            auto ptr = m_processingPlayers[id].release();
-            //std::thread([ptr] {
-                ptr->set(mdk::PlaybackState::Stopped);
-                ptr->waitFor(mdk::PlaybackState::Stopped);
-                delete ptr;
-            //}).detach();
             *finished = true;
             return 0;
         }
@@ -623,15 +624,9 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
 
             if (!cb(frame_num, timestamp_ms, vscaled.width(), vscaled.height(), vmd.codec.width, vmd.codec.height, vmd.codec.frame_rate, vmd.duration, vmd.frames, ptr, ptr_size)) {
                 // If cb returns false - stop the processing
-                auto pptr = m_processingPlayers[id].release();
-                pptr->set(mdk::PlaybackState::Paused);
-                pptr->waitFor(mdk::PlaybackState::Paused);
+                m_processingPlayers[id]->set(mdk::PlaybackState::Paused);
+                m_processingPlayers[id]->waitFor(mdk::PlaybackState::Paused);
                 cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-                //std::thread([pptr] {
-                    pptr->set(mdk::PlaybackState::Stopped);
-                    pptr->waitFor(mdk::PlaybackState::Stopped);
-                    delete pptr;
-                //}).detach();
                 *finished = true;
                 return 0;
             }
@@ -643,15 +638,9 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
                 m_processingPlayers[id]->seek(ranges[*range_id].first, mdk::SeekFlag::FromStart);
                 return 0;
             }
-            auto ptr = m_processingPlayers[id].release();
-            ptr->set(mdk::PlaybackState::Paused);
-            ptr->waitFor(mdk::PlaybackState::Paused);
+            m_processingPlayers[id]->set(mdk::PlaybackState::Paused);
+            m_processingPlayers[id]->waitFor(mdk::PlaybackState::Paused);
             cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            //std::thread([ptr] {
-                ptr->set(mdk::PlaybackState::Stopped);
-                ptr->waitFor(mdk::PlaybackState::Stopped);
-                delete ptr;
-            //}).detach();
             *finished = true;
             return 0;
         }

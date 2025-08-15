@@ -178,4 +178,9 @@ impl MDKPlayerWrapper {
             });
         })
     }
+    pub fn stop_processing(&mut self, id: usize) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *", id as "uint64_t"] {
+            self->mdkplayer->stopProcessingPlayer(id);
+        })
+    }
 }

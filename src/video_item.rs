@@ -217,6 +217,9 @@ impl MDKVideoItem {
     pub fn startProcessing<F: FnMut(i32, f64, u32, u32, u32, u32, f64, f64, u32, &mut [u8]) -> bool + 'static>(&mut self, id: usize, width: usize, height: usize, yuv: bool, custom_decoder: &str, ranges_ms: Vec<(usize, usize)>, cb: F) {
         self.m_player.start_processing(id, width, height, custom_decoder, yuv, ranges_ms, cb);
     }
+    pub fn stopProcessing(&mut self, id: usize) {
+        self.m_player.stop_processing(id);
+    }
 
     pub fn get_mdkplayer_mut(&mut self) -> &mut MDKPlayerWrapper {
         &mut self.m_player
