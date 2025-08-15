@@ -576,25 +576,6 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
 
         auto timestamp_ms = v.timestamp() * 1000.0;
 
-        if (timestamp_ms >= ranges[*range_id].second) {
-            if (*range_id + 1 < ranges.size()) {
-                *range_id += 1;
-                m_processingPlayers[id]->seek(ranges[*range_id].first, mdk::SeekFlag::FromStart);
-                return 0;
-            }
-            auto ptr = m_processingPlayers[id].release();
-            ptr->set(mdk::PlaybackState::Paused);
-            ptr->waitFor(mdk::PlaybackState::Paused);
-            cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-            std::thread([ptr] {
-                ptr->set(mdk::PlaybackState::Stopped);
-                ptr->waitFor(mdk::PlaybackState::Stopped);
-                delete ptr;
-            }).detach();
-            *finished = true;
-            return 0;
-        }
-
         auto md = m_processingPlayers[id]->mediaInfo();
         if (!md.video.empty()) {
             auto vmd = md.video[0];
@@ -655,6 +636,26 @@ void MDKPlayer::initProcessingPlayer(uint64_t id, uint64_t width, uint64_t heigh
                 return 0;
             }
         }
+
+        if (timestamp_ms >= ranges[*range_id].second) {
+            if (*range_id + 1 < ranges.size()) {
+                *range_id += 1;
+                m_processingPlayers[id]->seek(ranges[*range_id].first, mdk::SeekFlag::FromStart);
+                return 0;
+            }
+            auto ptr = m_processingPlayers[id].release();
+            ptr->set(mdk::PlaybackState::Paused);
+            ptr->waitFor(mdk::PlaybackState::Paused);
+            cb(-1, -1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            std::thread([ptr] {
+                ptr->set(mdk::PlaybackState::Stopped);
+                ptr->waitFor(mdk::PlaybackState::Stopped);
+                delete ptr;
+            }).detach();
+            *finished = true;
+            return 0;
+        }
+
         return 0;
     });
     player->setVideoSurfaceSize(64, 64);
