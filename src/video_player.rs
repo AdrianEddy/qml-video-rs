@@ -161,7 +161,11 @@ impl MDKPlayerWrapper {
             std::vector<std::pair<uint64_t, uint64_t>> ranges(ranges_ptr, ranges_ptr + ranges_len);
             self->mdkplayer->initProcessingPlayer(id, width, height, yuv, custom_decoder, ranges, [cb_ptr](int frame, double timestamp, int width, int height, int org_width, int org_height, double fps, double duration_ms, uint32_t frame_count, const uint8_t *bits, uint64_t bitsSize) -> bool {
                 return rust!(Rust_MDKPlayer_videoProcess [cb_ptr: *mut dyn FnMut(i32, f64, u32, u32, u32, u32, f64, f64, u32, &mut [u8]) -> bool as "TraitObject2", frame: i32 as "int", timestamp: f64 as "double", width: u32 as "uint32_t", height: u32 as "uint32_t", org_width: u32 as "uint32_t", org_height: u32 as "uint32_t", fps: f64 as "double", duration_ms: f64 as "double", frame_count: u32 as "uint32_t", bitsSize: u64 as "uint64_t", bits: *mut u8 as "const uint8_t *"] -> bool as "bool" {
-                    let pixels = unsafe { std::slice::from_raw_parts_mut(bits, bitsSize as usize) };
+                    let pixels: &mut [u8] = if bits.is_null() || bitsSize == 0 {
+                        &mut []
+                    } else {
+                        unsafe { std::slice::from_raw_parts_mut(bits, bitsSize as usize) }
+                    };
 
                     let mut cb = unsafe { Box::from_raw(cb_ptr) };
 
