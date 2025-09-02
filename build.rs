@@ -67,6 +67,8 @@ fn main() {
             let _ = Command::new("mkdir").args(&[&format!("{}/../../../../Frameworks", env::var("OUT_DIR").unwrap())]).status();
             if std::path::Path::new(&format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework")).exists() {
                 println!("cargo:rustc-link-search=framework={path}lib/mdk.xcframework/ios-arm64/");
+                let _ = Command::new("mkdir").args(&["-p", &format!("{}{}mdk", path, entry.3)]).status();
+                let _ = Command::new("cp").args(&["-af", &format!("{path}lib/mdk.xcframework/ios-arm64/mdk.framework/Headers/"), &format!("{}{}mdk", path, entry.3)]).status();
                 Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework"), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
             } else {
                 println!("cargo:rustc-link-search=framework={path}lib/");
