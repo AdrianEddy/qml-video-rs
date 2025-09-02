@@ -19,4 +19,4 @@ mdk-nightly = []
 
 [build-dependencies]
 cpp_build = "0.5"
-ureq = "3.0"
+ureq = "3.1"

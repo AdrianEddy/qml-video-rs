@@ -61,12 +61,17 @@ fn main() {
 
     if let Ok(path) = download_and_extract(&entry.0, &format!("{}{}", entry.1, entry.2)) {
         if target_os == "macos" || target_os == "ios" {
-            println!("cargo:rustc-link-search=framework={}{}", path, "lib/");
             println!("cargo:rustc-link-lib=framework=mdk");
             config.flag_if_supported("-fobjc-arc");
             config.flag("-x").flag("objective-c++");
             let _ = Command::new("mkdir").args(&[&format!("{}/../../../../Frameworks", env::var("OUT_DIR").unwrap())]).status();
-            Command::new("cp").args(&["-af", &format!("{}/lib/mdk.framework", path), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
+            if std::path::Path::new(&format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework")).exists() {
+                println!("cargo:rustc-link-search=framework={path}lib/mdk.xcframework/ios-arm64/");
+                Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework"), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
+            } else {
+                println!("cargo:rustc-link-search=framework={path}lib/");
+                Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.framework"), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
+            }
         } else {
             println!("cargo:rustc-link-search={}{}", path, entry.1);
             println!("cargo:rustc-link-lib=mdk");
@@ -120,7 +125,8 @@ fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error
         }
     }
     let out_dir = env::var("OUT_DIR").unwrap();
-    if !Path::new(&format!("{}/mdk-sdk/{}", out_dir, check)).exists() {
+
+    if !Path::new(&format!("{}/mdk-sdk/{}", out_dir, check)).exists() && !Path::new(&format!("{}/mdk-sdk/{}", out_dir, check.replace("mdk.framework", "mdk.xcframework"))).exists() {
         let ext = if url.contains(".tar.xz") { ".tar.xz" } else { ".7z" };
         {
             let mut reader = ureq::get(url).call().map(|x| x.into_body().into_reader()).map_err(|_| std::io::ErrorKind::Other)?;
