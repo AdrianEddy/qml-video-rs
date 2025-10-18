@@ -9,6 +9,11 @@ fn main() {
     let qt_library_path = env::var("DEP_QT_LIBRARY_PATH").unwrap();
     let qt_version      = env::var("DEP_QT_VERSION").unwrap();
 
+    println!("cargo:rerun-if-changed=src/cpp/MDKPlayer.cpp");
+    println!("cargo:rerun-if-changed=src/cpp/MDKPlayer.h");
+    println!("cargo:rerun-if-changed=src/cpp/VideoTextureNode.cpp");
+    println!("cargo:rerun-if-changed=src/cpp/VideoTextureNode.h");
+
     let mut config = cpp_build::Config::new();
 
     for f in std::env::var("DEP_QT_COMPILE_FLAGS").unwrap().split_terminator(";") {

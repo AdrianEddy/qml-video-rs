@@ -117,6 +117,8 @@ private:
     bool m_syncNext{false};
     int64_t m_playerPosition{0};
 
+    QJsonObject m_metadata;
+
     QSGImageNode *m_node{nullptr};
     QColor m_bgColor;
     QUrl m_pendingUrl;

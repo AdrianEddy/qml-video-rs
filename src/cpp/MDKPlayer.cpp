@@ -35,6 +35,7 @@ MDKPlayer::MDKPlayer() {
 
 void MDKPlayer::initPlayer() {
     m_player = std::make_unique<mdk::Player>();
+    m_metadata = QJsonObject();
 
     QString overrideDecoders = QString(qgetenv("MDK_DECODERS")).trimmed();
 
@@ -188,14 +189,17 @@ void MDKPlayer::setupPlayer() {
     m_player->setProperty("continue_at_end", "1");
     m_player->setBufferRange(0);
     m_player->onEvent([this](const mdk::MediaEvent &evt) -> bool {
-        if (evt.detail == "size") {
+        if (evt.category == "metadata") {
             auto md = m_player->mediaInfo();
-
             QJsonObject obj;
             for (const auto &x : getMediaInfo(md)) {
                 obj.insert(QString::fromUtf8(x.first.c_str(), x.first.size()), QString::fromUtf8(x.second.c_str(), x.second.size()));
             }
-            QMetaObject::invokeMethod(m_item, "metadataLoaded", Qt::QueuedConnection, Q_ARG(QJsonObject, obj));
+            m_metadata = obj;
+        }
+        if (evt.detail == "size") {
+            QMetaObject::invokeMethod(m_item, "metadataLoaded", Qt::QueuedConnection, Q_ARG(QJsonObject, m_metadata));
+
             m_firstFrameLoaded = true;
         }
         qDebug2("m_player->onEvent") << QString::fromUtf8(evt.category.c_str(), evt.category.size()) << QString::fromUtf8(evt.detail.c_str(), evt.detail.size());
