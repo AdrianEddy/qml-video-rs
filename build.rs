@@ -64,7 +64,7 @@ fn main() {
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let entry = &sdk[target_os.as_str()];
 
-    if let Ok(path) = download_and_extract(&entry.0, &format!("{}{}", entry.1, entry.2)) {
+    if let Ok(path) = download_and_extract(&entry.0, &format!("{}/{}", entry.1, entry.2)) {
         if target_os == "macos" || target_os == "ios" {
             println!("cargo:rustc-link-lib=framework=mdk");
             config.flag_if_supported("-fobjc-arc");
@@ -72,15 +72,15 @@ fn main() {
             let _ = Command::new("mkdir").args(&[&format!("{}/../../../../Frameworks", env::var("OUT_DIR").unwrap())]).status();
             if std::path::Path::new(&format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework")).exists() {
                 println!("cargo:rustc-link-search=framework={path}lib/mdk.xcframework/ios-arm64/");
-                let _ = Command::new("mkdir").args(&["-p", &format!("{}{}mdk", path, entry.3)]).status();
-                let _ = Command::new("cp").args(&["-af", &format!("{path}lib/mdk.xcframework/ios-arm64/mdk.framework/Headers/"), &format!("{}{}mdk", path, entry.3)]).status();
+                let _ = Command::new("mkdir").args(&["-p", &format!("{}/{}mdk", path, entry.3)]).status();
+                let _ = Command::new("cp").args(&["-af", &format!("{path}lib/mdk.xcframework/ios-arm64/mdk.framework/Headers/"), &format!("{}/{}mdk", path, entry.3)]).status();
                 Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework"), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
             } else {
                 println!("cargo:rustc-link-search=framework={path}lib/");
                 Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.framework"), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
             }
         } else {
-            println!("cargo:rustc-link-search={}{}", path, entry.1);
+            println!("cargo:rustc-link-search={}/{}", path, entry.1);
             println!("cargo:rustc-link-lib=mdk");
         }
         if target_os == "windows" {
@@ -106,7 +106,7 @@ fn main() {
             let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-braw.so", path), format!("{}/../../../libmdk-braw.so", env::var("OUT_DIR").unwrap()));
             let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-r3d.so", path), format!("{}/../../../libmdk-r3d.so", env::var("OUT_DIR").unwrap()));
         }
-        config.include(format!("{}{}", path, entry.3));
+        config.include(format!("{}/{}", path, entry.3));
     } else {
         panic!("Unable to download or extract mdk-sdk. Please make sure you have 7z in PATH or download mdk manually from https://sourceforge.net/projects/mdk-sdk/ and extract to {}", env::var("OUT_DIR").unwrap());
     }
