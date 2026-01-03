@@ -5,6 +5,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGImageNode>
 #include <QtCore/QJsonObject>
+#include <QtCore/QHash>
 #include <future>
 #include <chrono>
 #include <queue>
@@ -30,6 +31,7 @@ public:
 
     void setUrl(const QUrl &url, const QString &customDecoder);
     void setProperty(const QString &key, const QString &value);
+    void setDefaultProperty(const QString &key, const QString &value);
 
     void setBackgroundColor(const QColor &color);
 
@@ -115,6 +117,7 @@ private:
     double m_duration{0.0};
     float m_playbackRate{1.0};
     bool m_syncNext{false};
+    bool m_isHttp{false};
     int64_t m_playerPosition{0};
 
     QJsonObject m_metadata;
@@ -123,6 +126,7 @@ private:
     QColor m_bgColor;
     QUrl m_pendingUrl;
     QString m_pendingCustomDecoder;
+    QHash<QString, QString> m_defaultProperties;
 };
 
 // Simple wrapper class to workaround class alignment issues when using it from Rust

@@ -53,6 +53,7 @@ pub struct MDKVideoItem {
     pub url:    qt_property!(QUrl; CONST),
     pub setUrl: qt_method!(fn(&mut self, url: QUrl, custom_decoder: QString)),
     pub setProperty: qt_method!(fn(&mut self, key: QString, value: QString)),
+    pub setDefaultProperty: qt_method!(fn(&mut self, key: QString, value: QString)),
 
     pub forceRedraw: qt_method!(fn(&mut self)),
 
@@ -73,6 +74,13 @@ pub struct MDKVideoItem {
     pub frameRate:  qt_property!(f64; NOTIFY metadataChanged),
     pub metadataChanged: qt_signal!(),
     pub surfaceSizeChanged: qt_signal!(),
+
+    pub buffering: qt_property!(bool; NOTIFY bufferingChanged),
+    pub bufferingChanged: qt_signal!(),
+    pub bufferedRanges: qt_property!(QJsonArray; NOTIFY bufferingChanged),
+
+    pub setBufferedRanges: qt_method!(fn(&mut self, v: QJsonArray)),
+    pub setBuffering:      qt_method!(fn(&mut self, v: bool)),
 
     pub metadataLoaded: qt_signal!(md: QJsonObject),
 
@@ -140,6 +148,10 @@ impl MDKVideoItem {
     pub fn setProperty(&mut self, key: QString, value: QString) {
         self.m_player.set_property(key, value);
     }
+    /// This property is applied to MDKPlayer after each time it's (re)created and before loading any media.
+    pub fn setDefaultProperty(&mut self, key: QString, value: QString) {
+        self.m_player.set_default_property(key, value);
+    }
 
     pub fn setMuted(&mut self, v: bool) { self.m_player.set_muted(v); self.mutedChanged(); }
     pub fn getMuted(&self) -> bool { self.m_player.get_muted() }
@@ -178,6 +190,15 @@ impl MDKVideoItem {
         if let Some(ref mut cb) = self.m_resizeCb {
             cb(width, height)
         }
+    }
+
+    fn setBuffering(&mut self, v: bool) {
+        self.buffering = v;
+        self.bufferingChanged();
+    }
+    fn setBufferedRanges(&mut self, v: QJsonArray) {
+        self.bufferedRanges = v;
+        self.bufferingChanged();
     }
 
     fn process_pixels(&mut self, frame: u32, timestamp: f64, width: u32, height: u32, stride: u32, pixels: &mut [u8]) -> (u32, u32, u32, *mut u8) {

@@ -53,6 +53,11 @@ impl MDKPlayerWrapper {
             self->mdkplayer->setProperty(key, value);
         })
     }
+    pub fn set_default_property(&mut self, key: QString, value: QString) {
+        cpp!(unsafe [self as "MDKPlayerWrapper *", key as "QString", value as "QString"] {
+            self->mdkplayer->setDefaultProperty(key, value);
+        })
+    }
 
     pub fn set_background_color(&mut self, color: QColor) {
         cpp!(unsafe [self as "MDKPlayerWrapper *", color as "QColor"] {

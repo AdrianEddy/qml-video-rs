@@ -3,6 +3,7 @@
 #include <string>
 #include <thread>
 #include <QTimer>
+#include <QJsonArray>
 #include <QGuiApplication>
 #if __has_include(<QX11Info>)
 #include <QX11Info>
@@ -110,12 +111,22 @@ void MDKPlayer::setProperty(const QString &key, const QString &value) {
     }
 }
 
+void MDKPlayer::setDefaultProperty(const QString &key, const QString &value) {
+    if (m_player) {
+        m_player->setProperty(toStdString(key), toStdString(value));
+    }
+    m_defaultProperties.insert(key, value);
+}
+
 void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
     m_overrideFps = 0.0;
     if (!m_item) {
         m_pendingUrl = url;
         m_pendingCustomDecoder = customDecoder;
         return;
+    }
+    if (url.toString().contains("http://") || url.toString().contains("https://")) {
+        m_isHttp = true;
     }
     destroyPlayer();
     initPlayer();
@@ -125,8 +136,9 @@ void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
         qDebug2("setUrl") << "MDK decoder:" << customDecoder;
         if (customDecoder.startsWith("FFmpeg:avformat_options=")) {
             additionalUrl = "?mdkopt=avformat&" + customDecoder.mid(24);
-        } else {
-            m_player->setDecoders(mdk::MediaType::Video, { toStdString(customDecoder) });
+        } else if (customDecoder.startsWith("headers:")) {
+            qDebug2("setUrl") << "Setting custom HTTP headers:" << customDecoder.mid(8);
+            m_player->setProperty("avio.headers", customDecoder.mid(8).toStdString());
         }
     }
 
@@ -187,7 +199,12 @@ void MDKPlayer::setReadyForProcessingCallback(ReadyForProcessingCb &&cb) {
 void MDKPlayer::setupPlayer() {
     m_player->setRenderCallback([this](void *) { QMetaObject::invokeMethod(m_item, "update"); });
     m_player->setProperty("continue_at_end", "1");
+    if (!m_isHttp) {
     m_player->setBufferRange(0);
+    }
+    for (auto it = m_defaultProperties.constBegin(); it != m_defaultProperties.constEnd(); ++it) {
+        m_player->setProperty(toStdString(it.key()), toStdString(it.value()));
+    }
     m_player->onEvent([this](const mdk::MediaEvent &evt) -> bool {
         if (evt.category == "metadata") {
             auto md = m_player->mediaInfo();
@@ -221,6 +238,20 @@ void MDKPlayer::setupPlayer() {
     m_player->onMediaStatusChanged([this](mdk::MediaStatus status) -> bool {
         if (!m_player) return false;
 
+        if (status & mdk::MediaStatus::Buffering) {
+            QMetaObject::invokeMethod(m_item, "setBuffering", Q_ARG(bool, true));
+        } else if ((status & mdk::MediaStatus::Buffered) && !(status & mdk::MediaStatus::Seeking)) {
+            QJsonArray ranges;
+            auto br = m_player->bufferedTimeRanges();
+            for (const auto &r : br) {
+                QJsonObject obj;
+                obj.insert("start", QJsonValue(double(r.start)));
+                obj.insert("end",   QJsonValue(double(r.end)));
+                ranges.append(obj);
+            }
+            QMetaObject::invokeMethod(m_item, "setBufferedRanges", Q_ARG(QJsonArray, ranges));
+            QMetaObject::invokeMethod(m_item, "setBuffering", Q_ARG(bool, false));
+        }
         // qDebug2("m_player->onMediaStatusChanged") <<
         //     QString(status & mdk::MediaStatus::Unloaded?  "Unloaded | "  : "") +
         //     QString(status & mdk::MediaStatus::Loading?   "Loading | "   : "") +
@@ -488,14 +519,14 @@ void MDKPlayer::setFrameRate(float fps) {
 void MDKPlayer::seekToTimestamp(float timestampMs, bool exact) {
     if (!m_videoLoaded || !m_player) return;
 
-    m_player->seek(timestampMs, exact? mdk::SeekFlag::FromStart : mdk::SeekFlag::FromStart | mdk::SeekFlag::KeyFrame);
+    m_player->seek(timestampMs, (exact? mdk::SeekFlag::FromStart : mdk::SeekFlag::FromStart | mdk::SeekFlag::KeyFrame) | mdk::SeekFlag::InCache);
     forceRedraw();
 }
 
 void MDKPlayer::seekToFrameDelta(int64_t frameDelta) {
     if (!m_videoLoaded || !m_player) return;
 
-    m_player->seek(frameDelta, mdk::SeekFlag::FromNow | mdk::SeekFlag::Frame);
+    m_player->seek(frameDelta, mdk::SeekFlag::FromNow | mdk::SeekFlag::Frame | mdk::SeekFlag::InCache);
     forceRedraw();
 }
 
