@@ -91,12 +91,19 @@ public:
     void setUserData(void *ptr);
     void setUserDataDestructor(std::function<void(void *)> &&cb);
 
+    void *userData2() const;
+    void setUserData2(void *ptr);
+    void setUserData2Destructor(std::function<void(void *)> &&cb);
+
 private:
     QMetaObject::Connection m_connectionBeforeRendering;
     QMetaObject::Connection m_connectionScreenChanged;
 
     void *m_userData{nullptr};
     std::function<void(void *)> m_userDataDestructor;
+
+    void *m_userData2{nullptr};
+    std::function<void(void *)> m_userData2Destructor;
 
     ProcessPixelsCb m_processPixels;
     ProcessTextureCb m_processTexture;

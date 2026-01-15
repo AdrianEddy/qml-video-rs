@@ -101,6 +101,7 @@ MDKPlayer::~MDKPlayer() {
     m_processTexture = nullptr;
 
     if (m_userDataDestructor && m_userData) { m_userDataDestructor(m_userData); m_userData = nullptr; }
+    if (m_userData2Destructor && m_userData2) { m_userData2Destructor(m_userData2); m_userData2 = nullptr; }
 
     destroyPlayer();
 }
@@ -789,4 +790,14 @@ void MDKPlayer::setUserData(void *ptr) {
 }
 void MDKPlayer::setUserDataDestructor(std::function<void(void *)> &&cb) {
     m_userDataDestructor = cb;
+}
+
+void *MDKPlayer::userData2() const {
+    return m_userData2;
+}
+void MDKPlayer::setUserData2(void *ptr) {
+    m_userData2 = ptr;
+}
+void MDKPlayer::setUserData2Destructor(std::function<void(void *)> &&cb) {
+    m_userData2Destructor = cb;
 }
