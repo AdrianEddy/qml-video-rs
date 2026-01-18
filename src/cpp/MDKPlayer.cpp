@@ -95,10 +95,14 @@ void MDKPlayer::destroyPlayer() {
 }
 
 MDKPlayer::~MDKPlayer() {
+    m_shuttingDown = true;
     m_videoLoaded = false;
     m_firstFrameLoaded = false;
     m_processPixels = nullptr;
     m_processTexture = nullptr;
+    m_readyForProcessing = nullptr;
+    m_item = nullptr;
+    m_window = nullptr;
 
     if (m_userDataDestructor && m_userData) { m_userDataDestructor(m_userData); m_userData = nullptr; }
     if (m_userData2Destructor && m_userData2) { m_userData2Destructor(m_userData2); m_userData2 = nullptr; }
@@ -121,7 +125,7 @@ void MDKPlayer::setDefaultProperty(const QString &key, const QString &value) {
 
 void MDKPlayer::setUrl(const QUrl &url, const QString &customDecoder) {
     m_overrideFps = 0.0;
-    if (!m_item) {
+    if (!m_item || !m_window || !m_node) {
         m_pendingUrl = url;
         m_pendingCustomDecoder = customDecoder;
         return;
@@ -179,7 +183,8 @@ float MDKPlayer::getVolume() { return m_player? m_player->volume() : 0.0; }
 void MDKPlayer::setupNode(QSGImageNode *node, QQuickItem *item) {
     m_node = node;
     m_item = item;
-    m_window = item->window();
+    m_window = item? item->window() : nullptr;
+    if (!m_window) return;
     node->setOwnsTexture(true);
     if (!m_pendingUrl.isEmpty()) {
         setUrl(m_pendingUrl, m_pendingCustomDecoder);
@@ -320,6 +325,8 @@ void MDKPlayer::setupPlayer() {
 
 void MDKPlayer::windowBeforeRendering() {
     // QElapsedTimer t; t.start();
+    if (m_shuttingDown.load()) return;
+    if (!m_item || !m_window || !m_player) return;
 
     if (!m_videoLoaded || !m_player) return;
 
@@ -468,13 +475,16 @@ void MDKPlayer::windowBeforeRendering() {
     QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, timestamp * 1000.0), Q_ARG(int, frame));
 }
 
-void MDKPlayer::sync(QSize newSize, bool force) {
+void MDKPlayer::sync(QSGImageNode *node, QSize newSize, QQuickItem *item, bool force) {
+    if (m_shuttingDown.load()) return;
+    if (!m_item || !m_window || !item || m_item != item) return;
+    if (!node) return;
     if (m_syncNext) {
         force = true;
         m_syncNext = false;
     }
     if (!m_player) { m_size = newSize; return; }
-    if (!force && m_node->texture() && newSize == m_size)
+    if (!force && node->texture() && newSize == m_size)
         return;
 
     if (newSize.width() < 32 || newSize.height() < 32)
@@ -488,11 +498,11 @@ void MDKPlayer::sync(QSize newSize, bool force) {
         return;
     qDebug2("MDKPlayer::sync") << "created texture" << tex << m_size;
     QMetaObject::invokeMethod(m_item, "surfaceSizeUpdated", Q_ARG(uint, m_size.width()), Q_ARG(uint, m_size.height()));
-    m_node->setTexture(tex);
-    m_node->setOwnsTexture(true);
-    m_node->setTextureCoordinatesTransform(m_tx); // MUST set when texture() is available
-    m_node->setFiltering(QSGTexture::Linear);
-    m_node->setRect(0, 0, m_item->width(), m_item->height());
+    node->setTexture(tex);
+    node->setOwnsTexture(true);
+    node->setTextureCoordinatesTransform(m_tx); // MUST set when texture() is available
+    node->setFiltering(QSGTexture::Linear);
+    node->setRect(0, 0, m_item->width(), m_item->height());
     m_player->setVideoSurfaceSize(m_size.width(), m_size.height());
 }
 

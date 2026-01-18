@@ -52,7 +52,7 @@ public:
 
     void windowBeforeRendering();
 
-    void sync(QSize newSize, bool force = false);
+    void sync(QSGImageNode *node, QSize newSize, QQuickItem *item, bool force = false);
     void forceRedraw() { m_renderedPosition = -1; m_playerPosition = 0; m_renderedReturnCount = 0; }
 
     void play();
@@ -134,6 +134,7 @@ private:
     QUrl m_pendingUrl;
     QString m_pendingCustomDecoder;
     QHash<QString, QString> m_defaultProperties;
+    std::atomic<bool> m_shuttingDown{false};
 };
 
 // Simple wrapper class to workaround class alignment issues when using it from Rust

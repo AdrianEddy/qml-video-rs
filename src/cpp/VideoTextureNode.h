@@ -3,6 +3,7 @@
 
 #include <QQuickWindow>
 #include <QSGImageNode>
+#include <QPointer>
 #include <private/qquickitem_p.h>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
 #   include <rhi/qrhi.h>
@@ -55,8 +56,8 @@ public:
     std::unique_ptr<QRhiRenderPassDescriptor> m_rtRp;
 
     QSGImageNode::TextureCoordinatesTransformMode m_tx{QSGImageNode::TextureCoordinatesTransformFlag::NoTransform};
-    QQuickWindow *m_window{nullptr};
-    QQuickItem *m_item{nullptr};
+    QPointer<QQuickItem>   m_item;
+    QPointer<QQuickWindow> m_window;
 
     QMatrix4x4 m_proj;
     QSize m_size;
