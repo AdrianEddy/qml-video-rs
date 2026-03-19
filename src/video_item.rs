@@ -104,12 +104,24 @@ pub struct MDKVideoItem {
 impl MDKVideoItem {
     pub fn onProcessPixels(&mut self, cb: ProcessPixelsCb) {
         self.m_processPixelsCb = Some(cb);
+        let player = &self.m_player;
+        cpp!(unsafe [player as "MDKPlayerWrapper*"] {
+            player->mdkplayer->setProcessPixelsCallback(processPixelsCb);
+        });           
     }
     pub fn onProcessTexture(&mut self, cb: ProcessTextureCb) {
         self.m_processTextureCb = Some(cb);
+        let player = &self.m_player;
+        cpp!(unsafe [player as "MDKPlayerWrapper*"] {
+            player->mdkplayer->setProcessTextureCallback(processTextureCb);
+        });
     }
     pub fn readyForProcessing(&mut self, cb: ReadyForProcessingCb) {
         self.m_readyForProcessingCb = Some(cb);
+        let player = &self.m_player;
+        cpp!(unsafe [player as "MDKPlayerWrapper*"] {
+            player->mdkplayer->setReadyForProcessingCallback(readyForProcessingCb);
+        });
     }
     pub fn onResize(&mut self, cb: ResizeCb) {
         self.m_resizeCb = Some(cb);
@@ -344,19 +356,18 @@ impl QQuickItem for MDKVideoItem {
 
                 cpp!(unsafe [image_node as "QSGImageNode**", item as "QQuickItem*", player as "MDKPlayerWrapper*", w as "uint32_t", h as "uint32_t"] {
                     if (!item) return;
+                    auto *win = item->window();
+                    if (!win) return;
                     if (!*image_node) {
-                        *image_node = item->window()->createImageNode();
+                        *image_node = win->createImageNode();
                         player->mdkplayer->setupNode(*image_node, item);
-                        player->mdkplayer->setProcessPixelsCallback(processPixelsCb);
-                        player->mdkplayer->setProcessTextureCallback(processTextureCb);
-                        player->mdkplayer->setReadyForProcessingCallback(readyForProcessingCb);
                     }
 
-                    QSize newSize = QSizeF(item->size() * item->window()->effectiveDevicePixelRatio()).toSize();
+                    QSize newSize = QSizeF(item->size() * win->effectiveDevicePixelRatio()).toSize();
                     if (w != 0 && h != 0) {
                         newSize = QSize(w, h);
                     }
-                    player->mdkplayer->sync(newSize);
+                    player->mdkplayer->sync(*image_node, newSize, item);
                     (*image_node)->markDirty(QSGImageNode::DirtyMaterial);
                 });
                 if self.m_geometryChanged {

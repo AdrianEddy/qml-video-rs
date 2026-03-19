@@ -6,12 +6,25 @@ using namespace mdk;
 
 QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize &size) {
     SetGlobalOption("sdr.white", 100.0f);
-    auto sgrc = QQuickItemPrivate::get(m_item)->sceneGraphRenderContext();
-    auto rhi = sgrc->rhi();
+    if (!m_item || !m_window) return nullptr;
+
+    auto *itemPriv = QQuickItemPrivate::get(m_item);
+    if (!itemPriv) return nullptr;
+
+    auto *rc = itemPriv->sceneGraphRenderContext();
+    if (!rc) return nullptr;
+
+    auto *rhi = rc->rhi();
+    if (!rhi) return nullptr;
+
+    if (size.isEmpty() || size.width() < 1 || size.height() < 1)
+        return nullptr;
 
     m_texture = rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::RenderTarget | QRhiTexture::UsedAsTransferSource);
+    if (!m_texture) return nullptr;
     if (!m_texture->create()) {
         delete m_texture;
+        m_texture = nullptr;
         return nullptr;
     }
     m_proj = rhi->clipSpaceCorrMatrix();
