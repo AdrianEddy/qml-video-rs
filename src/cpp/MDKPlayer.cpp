@@ -201,7 +201,7 @@ void MDKPlayer::setupPlayer() {
     m_player->setRenderCallback([this](void *) { QMetaObject::invokeMethod(m_item, "update"); });
     m_player->setProperty("continue_at_end", "1");
     if (!m_isHttp) {
-    m_player->setBufferRange(0);
+        m_player->setBufferRange(0);
     }
     for (auto it = m_defaultProperties.constBegin(); it != m_defaultProperties.constEnd(); ++it) {
         m_player->setProperty(toStdString(it.key()), toStdString(it.value()));
@@ -288,6 +288,14 @@ void MDKPlayer::setupPlayer() {
                 }
 
                 QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, m_duration), Q_ARG(qlonglong, v.frames), Q_ARG(double, fps), Q_ARG(uint, v.codec.width), Q_ARG(uint, v.codec.height));
+            } else if (!md.audio.empty()) {
+                auto a = md.audio[0];
+                m_duration = a.duration;
+                m_fps = 0;
+
+                QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, m_duration), Q_ARG(qlonglong, 0), Q_ARG(double, 0), Q_ARG(uint, 0), Q_ARG(uint, 0));
+                QMetaObject::invokeMethod(m_item, "metadataLoaded", Qt::QueuedConnection, Q_ARG(QJsonObject, m_metadata));
+                m_firstFrameLoaded = true;
             }
             m_player->setLoop(9999999);
             m_videoLoaded = true;
