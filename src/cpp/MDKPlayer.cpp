@@ -366,6 +366,10 @@ void MDKPlayer::windowBeforeRendering() {
     }
 
     if (timestamp < 0) {
+        if (m_fps == 0) { // Audio-only file
+            double ts_ms = double(m_player->position());
+            QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, ts_ms), Q_ARG(int, 0));
+        }
         return;
     }
 
