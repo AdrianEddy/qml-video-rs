@@ -37,6 +37,7 @@ MDKPlayer::MDKPlayer() {
 void MDKPlayer::initPlayer() {
     m_player = std::make_unique<mdk::Player>();
     m_metadata = QJsonObject();
+    m_shuttingDown = false;
 
     QString overrideDecoders = QString(qgetenv("MDK_DECODERS")).trimmed();
 
@@ -77,6 +78,7 @@ void MDKPlayer::initPlayer() {
     }
 }
 void MDKPlayer::destroyPlayer() {
+    m_shuttingDown = true; // Signal render thread to stop before any cleanup
     m_videoLoaded = false;
     m_firstFrameLoaded = false;
     if (m_connectionBeforeRendering) QObject::disconnect(m_connectionBeforeRendering);
@@ -335,13 +337,18 @@ void MDKPlayer::setupPlayer() {
 void MDKPlayer::windowBeforeRendering() {
     // QElapsedTimer t; t.start();
     if (m_shuttingDown.load()) return;
-    if (!m_item || !m_window || !m_player) return;
+    if (!m_item || !m_window) return;
+    if (!m_videoLoaded.load()) return;
 
-    if (!m_videoLoaded || !m_player) return;
+    // Capture player pointer locally to avoid TOCTOU race with destroyPlayer() on GUI thread.
+    // destroyPlayer() may call m_player.release() concurrently, making m_player null.
+    // The released player is kept alive for 1 second via QTimer, so our local pointer remains valid.
+    auto player = m_player.get();
+    if (!player) return;
 
     // Audio-only file: no video frames to render, just report position
     if (m_fps == 0) {
-        double ts_ms = double(m_player->position());
+        double ts_ms = double(player->position());
         QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, ts_ms), Q_ARG(int, 0));
         return;
     }
@@ -369,7 +376,7 @@ void MDKPlayer::windowBeforeRendering() {
     }
 
     cb->beginExternal();
-    double timestamp = m_player->renderVideo();
+    double timestamp = player->renderVideo();
     cb->endExternal();
 
     if (doRenderPass) {
@@ -392,7 +399,7 @@ void MDKPlayer::windowBeforeRendering() {
 
     bool processed = false;
     if (m_firstFrameLoaded.load()) {
-        if (!m_videoLoaded || !m_player) return;
+        if (!m_videoLoaded.load() || m_shuttingDown.load()) return;
         if (m_processTexture && m_texture) {
             uint64_t backend_id = 0;
             uint64_t ptr1 = m_texture->nativeTexture().object;
@@ -475,7 +482,7 @@ void MDKPlayer::windowBeforeRendering() {
         if (!processed && m_processPixels) {
             if (!m_processTexture || m_renderFailCounter > 10) {
                 auto img = toImage();
-                if (!m_videoLoaded || !m_player) return;
+                if (!m_videoLoaded.load() || m_shuttingDown.load()) return;
 
                 const auto img2 = m_processPixels(m_item, frame, timestamp * 1000.0, img);
                 if (!img2.isNull() && img2.constBits()) {
