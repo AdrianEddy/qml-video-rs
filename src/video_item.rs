@@ -368,7 +368,8 @@ impl QQuickItem for MDKVideoItem {
                         newSize = QSize(w, h);
                     }
                     player->mdkplayer->sync(*image_node, newSize, item);
-                    (*image_node)->markDirty(QSGImageNode::DirtyMaterial);
+                    if ((*image_node)->texture())
+                        (*image_node)->markDirty(QSGImageNode::DirtyMaterial);
                 });
                 if self.m_geometryChanged {
                     let rect = (self as &dyn QQuickItem).bounding_rect();

@@ -300,6 +300,7 @@ void MDKPlayer::setupPlayer() {
 
                 QMetaObject::invokeMethod(m_item, "videoLoaded", Q_ARG(double, m_duration), Q_ARG(qlonglong, 0), Q_ARG(double, 0), Q_ARG(uint, 0), Q_ARG(uint, 0));
                 QMetaObject::invokeMethod(m_item, "metadataLoaded", Qt::QueuedConnection, Q_ARG(QJsonObject, m_metadata));
+                QMetaObject::invokeMethod(m_item, "update");
                 m_firstFrameLoaded = true;
             }
             m_player->setLoop(9999999);
@@ -338,6 +339,16 @@ void MDKPlayer::windowBeforeRendering() {
 
     if (!m_videoLoaded || !m_player) return;
 
+    // Audio-only file: no video frames to render, just report position
+    if (m_fps == 0) {
+        double ts_ms = double(m_player->position());
+        QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, ts_ms), Q_ARG(int, 0));
+        return;
+    }
+
+    // Don't render if sync() hasn't set up the render API for the current player yet
+    if (m_syncNext) return;
+
     if (m_renderedPosition == m_playerPosition && m_renderedReturnCount++ > 100) {
         return;
     }
@@ -366,10 +377,6 @@ void MDKPlayer::windowBeforeRendering() {
     }
 
     if (timestamp < 0) {
-        if (m_fps == 0) { // Audio-only file
-            double ts_ms = double(m_player->position());
-            QMetaObject::invokeMethod(m_item, "frameRendered", Q_ARG(double, ts_ms), Q_ARG(int, 0));
-        }
         return;
     }
 
