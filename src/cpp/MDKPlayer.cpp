@@ -191,6 +191,8 @@ void MDKPlayer::setupNode(QSGImageNode *node, QQuickItem *item) {
     if (!m_pendingUrl.isEmpty()) {
         setUrl(m_pendingUrl, m_pendingCustomDecoder);
         m_pendingUrl = QUrl();
+    } else if (!m_player) {
+        initPlayer();
     }
 }
 

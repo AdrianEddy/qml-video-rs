@@ -107,7 +107,7 @@ impl MDKVideoItem {
         let player = &self.m_player;
         cpp!(unsafe [player as "MDKPlayerWrapper*"] {
             player->mdkplayer->setProcessPixelsCallback(processPixelsCb);
-        });           
+        });
     }
     pub fn onProcessTexture(&mut self, cb: ProcessTextureCb) {
         self.m_processTextureCb = Some(cb);
@@ -368,8 +368,19 @@ impl QQuickItem for MDKVideoItem {
                         newSize = QSize(w, h);
                     }
                     player->mdkplayer->sync(*image_node, newSize, item);
-                    if ((*image_node)->texture())
+                    if ((*image_node)->texture()) {
                         (*image_node)->markDirty(QSGImageNode::DirtyMaterial);
+                    } else {
+                        // No texture available yet - create a 1x1 placeholder to prevent
+                        // "No QSGTexture provided from updateSampledImage()" crash
+                        QImage placeholder(1, 1, QImage::Format_RGBA8888_Premultiplied);
+                        placeholder.fill(Qt::transparent);
+                        auto *tex = win->createTextureFromImage(placeholder);
+                        if (tex) {
+                            (*image_node)->setTexture(tex);
+                            (*image_node)->setOwnsTexture(true);
+                        }
+                    }
                 });
                 if self.m_geometryChanged {
                     let rect = (self as &dyn QQuickItem).bounding_rect();

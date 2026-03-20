@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use qmetaobject::*;
 
 pub mod video_player;
