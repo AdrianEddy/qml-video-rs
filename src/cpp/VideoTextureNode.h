@@ -4,6 +4,7 @@
 #include <QQuickWindow>
 #include <QSGImageNode>
 #include <QPointer>
+#include <QColor>
 #include <private/qquickitem_p.h>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
 #   include <rhi/qrhi.h>
@@ -40,6 +41,8 @@ class VideoTextureNodePriv {
 public:
     QSGTexture *createTexture(mdk::Player *player, const QSize &size);
 
+    void clearTexture();
+
     // Read texture to QImage. This copies data from GPU to CPU
     QImage toImage(bool normalized = false);
 
@@ -54,6 +57,8 @@ public:
     QRhiTexture *m_workaroundTexture{nullptr};
     std::unique_ptr<QRhiTextureRenderTarget> m_rt;
     std::unique_ptr<QRhiRenderPassDescriptor> m_rtRp;
+    bool m_rtNeedsClear{true};
+    QColor m_bgColor;
 
     QSGImageNode::TextureCoordinatesTransformMode m_tx{QSGImageNode::TextureCoordinatesTransformFlag::NoTransform};
     QPointer<QQuickItem>   m_item;

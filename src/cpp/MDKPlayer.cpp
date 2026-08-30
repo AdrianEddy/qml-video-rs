@@ -372,8 +372,13 @@ void MDKPlayer::windowBeforeRendering() {
 #endif
     ;
 
+    // Fallback for the rare case where createTexture() ran outside a scene graph frame.
+    if (m_rtNeedsClear)
+        clearTexture();
+
     if (doRenderPass) {
         QRhiResourceUpdateBatch *u = context->rhi()->nextResourceUpdateBatch();
+        // The clear colour is ignored: the render target preserves its colour contents.
         cb->beginPass(m_rt.get(), QColor(Qt::black), { 1.0f, 0 }, u, QRhiCommandBuffer::ExternalContent);
     }
 

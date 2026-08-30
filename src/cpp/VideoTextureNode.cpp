@@ -30,7 +30,7 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
     m_proj = rhi->clipSpaceCorrMatrix();
 
     QRhiColorAttachment color0(m_texture);
-    m_rt.reset(rhi->newTextureRenderTarget({color0}));
+    m_rt.reset(rhi->newTextureRenderTarget({color0}, QRhiTextureRenderTarget::PreserveColorContents));
     if (!m_rt) {
         return nullptr;
     }
@@ -44,6 +44,8 @@ QSGTexture *VideoTextureNodePriv::createTexture(mdk::Player *player, const QSize
     if (!m_rt->create()) {
         return nullptr;
     }
+
+    clearTexture();
 
     QSGRendererInterface *rif = m_window->rendererInterface();
     switch (rif->graphicsApi()) {
@@ -177,6 +179,27 @@ QImage VideoTextureNodePriv::toImage(bool normalized) {
         ret.mirror();
 
     return ret;
+}
+
+void VideoTextureNodePriv::clearTexture() {
+    m_rtNeedsClear = true;
+    if (!m_texture || !m_item || !m_item->window()) return;
+
+    auto context = static_cast<QSGDefaultRenderContext *>(QQuickItemPrivate::get(m_item)->sceneGraphRenderContext());
+    if (!context || !context->rhi()) return;
+
+    // Only valid inside a scene graph frame; windowBeforeRendering() retries otherwise.
+    QRhiCommandBuffer *cb = context->currentFrameCommandBuffer();
+    if (!cb) return;
+
+    QImage blank(m_texture->pixelSize(), QImage::Format_RGBA8888);
+    blank.fill(m_bgColor.isValid() ? m_bgColor : QColor(Qt::black));
+
+    QRhiResourceUpdateBatch *u = context->rhi()->nextResourceUpdateBatch();
+    u->uploadTexture(m_texture, blank);
+    cb->resourceUpdate(u);
+
+    m_rtNeedsClear = false;
 }
 
 // Upload QImage to texture. This copies data from CPU to GPU

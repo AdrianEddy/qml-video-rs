@@ -130,7 +130,6 @@ private:
     QJsonObject m_metadata;
 
     QSGImageNode *m_node{nullptr};
-    QColor m_bgColor;
     QUrl m_pendingUrl;
     QString m_pendingCustomDecoder;
     QHash<QString, QString> m_defaultProperties;
