@@ -37,6 +37,7 @@ MDKPlayer::MDKPlayer() {
 void MDKPlayer::initPlayer() {
     m_player = std::make_unique<mdk::Player>();
     m_metadata = QJsonObject();
+    m_frameRotation = -1;
     m_shuttingDown = false;
 
     QString overrideDecoders = QString(qgetenv("MDK_DECODERS")).trimmed();
@@ -215,16 +216,35 @@ void MDKPlayer::setupPlayer() {
     for (auto it = m_defaultProperties.constBegin(); it != m_defaultProperties.constEnd(); ++it) {
         m_player->setProperty(toStdString(it.key()), toStdString(it.value()));
     }
+    // Invoked before a frame is delivered to the renderer, so the frame rotation is known before the "size" event.
+    // Only the first valid frame is looked at (the rotation is a property of the file); the callback stays registered
+    // because MDK holds its video mutex while invoking it, so it can't unregister itself.
+    // VideoFrame::rotation() is counter-clockwise (FFmpeg's display matrix convention), VideoStreamInfo::rotation is clockwise
+    m_player->onFrame<mdk::VideoFrame>([this](mdk::VideoFrame &frame, int) -> int {
+        if (m_frameRotation.load(std::memory_order_relaxed) >= 0) return 0;
+        if (frame && frame.timestamp() != mdk::TimestampEOS) {
+            int ccw = frame.rotation() % 360;
+            if (ccw < 0) ccw += 360;
+            m_frameRotation = (360 - ccw) % 360;
+        }
+        return 0;
+    });
     m_player->onEvent([this](const mdk::MediaEvent &evt) -> bool {
-        if (evt.category == "metadata") {
+        auto refreshMetadata = [this] {
             auto md = m_player->mediaInfo();
             QJsonObject obj;
             for (const auto &x : getMediaInfo(md)) {
                 obj.insert(QString::fromUtf8(x.first.c_str(), x.first.size()), QString::fromUtf8(x.second.c_str(), x.second.size()));
             }
             m_metadata = obj;
+        };
+        if (evt.category == "metadata") {
+            refreshMetadata();
         }
         if (evt.detail == "size") {
+            // The first frame has been decoded by now, so the metadata can include the frame rotation
+            refreshMetadata();
+            qDebug2("m_player->onEvent") << "frame rotation:" << frameRotation();
             QMetaObject::invokeMethod(m_item, "metadataLoaded", Qt::QueuedConnection, Q_ARG(QJsonObject, m_metadata));
 
             m_firstFrameLoaded = true;
@@ -606,10 +626,10 @@ int MDKPlayer::getRotation() {
     if (!m_videoLoaded || !m_player) return 0;
 
     auto md = m_player->mediaInfo();
-    if (!md.video.empty()) {
+    if (!md.video.empty() && md.video[0].rotation != 0) {
         return md.video[0].rotation;
     }
-    return 0;
+    return frameRotation();
 }
 
 void MDKPlayer::stopProcessingPlayer(uint64_t id) {
@@ -749,7 +769,7 @@ std::map<std::string, std::string> MDKPlayer::getMediaInfo(const MediaInfo &mi) 
         ret[key + "start_time"] = std::to_string(v.start_time);
         ret[key + "duration"] = std::to_string(m_duration);
         ret[key + "frames"] = std::to_string(v.frames);
-        ret[key + "rotation"] = std::to_string(v.rotation);
+        ret[key + "rotation"] = std::to_string(v.rotation != 0 || i != 0? v.rotation : frameRotation());
         for (const auto &x : v.metadata) {
             ret[key + "metadata." + x.first] = x.second;
         }

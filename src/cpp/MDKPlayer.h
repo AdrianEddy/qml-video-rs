@@ -114,6 +114,8 @@ private:
 
     std::atomic<bool> m_videoLoaded{false};
     std::atomic<bool> m_firstFrameLoaded{false};
+    std::atomic<int> m_frameRotation{-1}; // -1 until the first frame was decoded
+    int frameRotation() const { const int r = m_frameRotation.load(); return r < 0? 0 : r; }
 
     int m_renderFailCounter{10};
 
