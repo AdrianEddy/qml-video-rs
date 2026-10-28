@@ -10,6 +10,7 @@
 #include <chrono>
 #include <queue>
 #include <atomic>
+#include <mutex>
 #include <functional>
 
 #include "VideoTextureNode.h"
@@ -114,6 +115,16 @@ private:
 
     std::atomic<bool> m_videoLoaded{false};
     std::atomic<bool> m_firstFrameLoaded{false};
+    // `metadataLoaded` is emitted once per media: with the first decoded frame, or without one when none comes
+    // (`emitMetadataLoaded`)
+    std::atomic<bool> m_metadataLoadedSent{false};
+    std::atomic<uint64_t> m_mediaGeneration{0}; // Which player a queued call is for, moved on by destroyPlayer()
+    void invokeForCurrentMedia(std::function<void()> &&f);
+    void emitVideoLoaded(double duration, qlonglong frames, double fps, uint width, uint height);
+    void emitMetadataLoaded(const QJsonObject &md);
+    QJsonObject currentMetadata();
+    std::mutex m_mediaInfoMutex;
+    MediaInfo mediaInfo();
     std::atomic<int> m_frameRotation{-1}; // -1 until the first frame was decoded
     int frameRotation() const { const int r = m_frameRotation.load(); return r < 0? 0 : r; }
 
@@ -128,8 +139,6 @@ private:
     bool m_syncNext{false};
     bool m_isHttp{false};
     int64_t m_playerPosition{0};
-
-    QJsonObject m_metadata;
 
     QSGImageNode *m_node{nullptr};
     QUrl m_pendingUrl;
