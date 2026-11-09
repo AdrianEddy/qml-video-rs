@@ -11,6 +11,7 @@
 #include <queue>
 #include <atomic>
 #include <mutex>
+#include <memory>
 #include <functional>
 
 #include "VideoTextureNode.h"
@@ -112,6 +113,16 @@ private:
 
     std::unique_ptr<mdk::Player> m_player;
     std::map<uint64_t, std::unique_ptr<mdk::Player>> m_processingPlayers;
+
+    // Shared by m_player's event and status listeners (setupPlayer()). Those are never removed: removing them frees their
+    // std::function, which MDK may still call afterwards. MDK 0.40 did, after a switch away from a BRAW file: a reader of
+    // the old player reported its statuses to the removed listener, which crashed (an access violation on Windows; on
+    // macOS an empty std::function -> std::bad_function_call -> abort). destroyPlayer() marks them dead instead
+    struct ListenerGuard {
+        std::recursive_mutex mutex; // Held while a listener runs. Recursive: MDK reports some statuses on the calling thread
+        bool alive{true};
+    };
+    std::shared_ptr<ListenerGuard> m_listenerGuard;
 
     std::atomic<bool> m_videoLoaded{false};
     std::atomic<bool> m_firstFrameLoaded{false};

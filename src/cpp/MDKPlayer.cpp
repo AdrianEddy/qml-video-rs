@@ -85,14 +85,17 @@ void MDKPlayer::destroyPlayer() {
 
     if (m_player) {
         stop();
-        // None of the callbacks may run once this returns: they capture `this`, which ~MDKPlayer() destroys next, and
-        // they'd act on the next player (setUrl()). onMediaStatusChanged() and onEvent() *add* a listener: only nullptr
-        // removes them, and it waits for one running on an MDK thread to return. The other three replace their callback
-        // under a mutex held while it runs; they get a no-op, as for nullptr mdk::Player leaves MDK a C callback which
-        // dereferences a null `opaque`
-        m_player->onMediaStatusChanged(nullptr);
-        m_player->onEvent(nullptr);
-        m_player->onMediaStatusChanged([](mdk::MediaStatus) -> bool { return false; }); // Unloads the media at its next status change
+        // None of the callbacks may act once this returns: they capture `this`, which ~MDKPlayer() destroys next, and
+        // they'd act on the next player (setUrl()). The event and status listeners stay registered (see ListenerGuard):
+        // marking them dead waits for one running on an MDK thread to return, and a dead one returns at once (the status
+        // listener with false, which unloads the media at its next status change). The other three replace their
+        // callback under a mutex held while it runs; they get a no-op, as for nullptr mdk::Player leaves MDK a C callback
+        // which dereferences a null `opaque`
+        if (m_listenerGuard) {
+            const std::lock_guard<std::recursive_mutex> lock(m_listenerGuard->mutex);
+            m_listenerGuard->alive = false;
+        }
+        m_listenerGuard.reset();
         m_player->setRenderCallback([](void *) {});
         m_player->onStateChanged([](mdk::State) {});
         m_player->onFrame<mdk::VideoFrame>([](mdk::VideoFrame&, int) -> int { return 0; });
@@ -237,7 +240,13 @@ void MDKPlayer::setupPlayer() {
         }
         return 0;
     });
-    m_player->onEvent([this](const mdk::MediaEvent &evt) -> bool {
+    // onEvent() and onMediaStatusChanged() add a listener, removed only by nullptr (all of them), which frees it while
+    // MDK may still call it: these two are never removed, destroyPlayer() marks them dead through the guard
+    m_listenerGuard = std::make_shared<ListenerGuard>();
+    const auto guard = m_listenerGuard;
+    m_player->onEvent([this, guard](const mdk::MediaEvent &evt) -> bool {
+        const std::lock_guard<std::recursive_mutex> lock(guard->mutex);
+        if (!guard->alive) return false;
         if (evt.detail == "size") {
             // The first frame has been decoded by now, so the metadata can include the frame rotation
             qDebug2("m_player->onEvent") << "frame rotation:" << frameRotation();
@@ -261,7 +270,9 @@ void MDKPlayer::setupPlayer() {
         QMetaObject::invokeMethod(m_item, "stateChanged", Q_ARG(int, int(state)));
     });
 
-    m_player->onMediaStatusChanged([this](mdk::MediaStatus status) -> bool {
+    m_player->onMediaStatusChanged([this, guard](mdk::MediaStatus status) -> bool {
+        const std::lock_guard<std::recursive_mutex> lock(guard->mutex);
+        if (!guard->alive) return false; // Unloads the media at its next status change
         if (!m_player) return false;
 
         if (status & mdk::MediaStatus::Buffering) {
