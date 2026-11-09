@@ -196,9 +196,10 @@ impl MDKVideoItem {
         self.playing = state == 1;
         self.playingChanged();
     }
+    // The texture sync() created, queued from the render thread. It doesn't touch surfaceWidth/surfaceHeight: they're
+    // the size the app asked for, and this call can run after a newer setSurfaceSize() (eg. the texture for a new file
+    // created at the previous file's size, then the app's size for the new file), which it would undo for good
     pub fn surfaceSizeUpdated(&mut self, width: u32, height: u32) {
-        self.setSurfaceSize(width, height);
-
         if let Some(ref mut cb) = self.m_resizeCb {
             cb(width, height)
         }
@@ -241,6 +242,7 @@ impl MDKVideoItem {
 
         self.surfaceSizeChanged();
         self.forceRedraw();
+        (self as &dyn QQuickItem).update(); // update_paint_node() creates the texture at this size
     }
 
     pub fn setPlaybackRange(&mut self, from_ms: i64, to_ms: i64) {
