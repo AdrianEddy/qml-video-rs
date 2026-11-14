@@ -125,6 +125,7 @@ private:
     std::shared_ptr<ListenerGuard> m_listenerGuard;
 
     std::atomic<bool> m_videoLoaded{false};
+    std::atomic<bool> m_preparedSeen{false}; // MDK reported the media loaded and prepared, maybe before its streams
     std::atomic<bool> m_firstFrameLoaded{false};
     // `metadataLoaded` is emitted once per media: with the first decoded frame, or without one when none comes
     // (`emitMetadataLoaded`)
@@ -150,6 +151,15 @@ private:
     bool m_syncNext{false};
     bool m_isHttp{false};
     int64_t m_playerPosition{0};
+
+    // The playback range as MDK has it (setPlaybackRange()), and the state of watchLoop()
+    int64_t m_rangeFromMs{0};
+    int64_t m_rangeToMs{-1};
+    int64_t m_loopWatchPosition{-1};
+    int m_loopStillMs{0};
+    int64_t m_mediaDurationMs{0}; // the video's duration in the media's own timeline (without the frame rate override)
+    void watchLoop(uint64_t generation);
+    void announceLoaded();
 
     QSGImageNode *m_node{nullptr};
     QUrl m_pendingUrl;

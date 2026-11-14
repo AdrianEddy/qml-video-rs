@@ -142,12 +142,17 @@ fn binary_dir() -> String {
         .into_owned()
 }
 
-// A plugin is built against one libmdk, so one left over from an earlier SDK must not stay next to a newer libmdk
+// A plugin is built against one libmdk, so one left over from an earlier SDK must not stay next to a newer libmdk.
+// Either step failing (the old file locked by a running app, say) fails the build, as copying libmdk itself does.
 fn copy_or_remove(src: String, dst: String) {
     if Path::new(&src).exists() {
-        let _ = std::fs::copy(&src, &dst);
-    } else {
-        let _ = std::fs::remove_file(&dst);
+        if let Err(e) = std::fs::copy(&src, &dst) {
+            panic!("copying {src} to {dst}: {e}");
+        }
+    } else if let Err(e) = std::fs::remove_file(&dst) {
+        if e.kind() != std::io::ErrorKind::NotFound {
+            panic!("removing {dst}, a plugin the MDK SDK no longer has: {e}");
+        }
     }
 }
 
