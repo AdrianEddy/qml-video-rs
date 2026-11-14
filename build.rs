@@ -89,10 +89,12 @@ fn main() {
             let _ = std::fs::copy(format!("{}/bin/{arch_win}/ffmpeg-5.dll", path), format!("{}/../../../ffmpeg-5.dll", env::var("OUT_DIR").unwrap()));
             let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-braw.dll", path), format!("{}/../../../mdk-braw.dll", env::var("OUT_DIR").unwrap()));
             let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-r3d.dll", path), format!("{}/../../../mdk-r3d.dll", env::var("OUT_DIR").unwrap()));
+            copy_or_remove(format!("{}/bin/{arch_win}/mdk-crm.dll", path), format!("{}/../../../mdk-crm.dll", env::var("OUT_DIR").unwrap()));
 
             let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk.pdb", path), format!("{}/../../../mdk.pdb", env::var("OUT_DIR").unwrap())).unwrap();
             let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-braw.pdb", path), format!("{}/../../../mdk-braw.pdb", env::var("OUT_DIR").unwrap()));
             let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-r3d.pdb", path), format!("{}/../../../mdk-r3d.pdb", env::var("OUT_DIR").unwrap()));
+            copy_or_remove(format!("{}/bin/{arch_win}/mdk-crm.pdb", path), format!("{}/../../../mdk-crm.pdb", env::var("OUT_DIR").unwrap()));
         }
         if target_os == "android" {
             std::fs::copy(format!("{}/lib/arm64-v8a/libmdk.so", path), format!("{}/../../../libmdk.so", env::var("OUT_DIR").unwrap())).unwrap();
@@ -105,6 +107,7 @@ fn main() {
             std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk.so.0", path), format!("{}/../../../libmdk.so.0", env::var("OUT_DIR").unwrap())).unwrap();
             let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-braw.so", path), format!("{}/../../../libmdk-braw.so", env::var("OUT_DIR").unwrap()));
             let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-r3d.so", path), format!("{}/../../../libmdk-r3d.so", env::var("OUT_DIR").unwrap()));
+            copy_or_remove(format!("{}/lib/{arch_lnx}/libmdk-crm.so", path), format!("{}/../../../libmdk-crm.so", env::var("OUT_DIR").unwrap()));
         }
         config.include(format!("{}/{}", path, entry.3));
     } else {
@@ -125,10 +128,23 @@ fn main() {
 
 }
 
+// A plugin is built against one libmdk, so one left over from an earlier SDK must not stay next to a newer libmdk
+fn copy_or_remove(src: String, dst: String) {
+    if Path::new(&src).exists() {
+        let _ = std::fs::copy(&src, &dst);
+    } else {
+        let _ = std::fs::remove_file(&dst);
+    }
+}
+
 fn download_and_extract(url: &str, check: &str) -> Result<String, std::io::Error> {
+    println!("cargo:rerun-if-env-changed=MDK_SDK");
     if let Ok(path) = env::var("MDK_SDK") {
         if Path::new(&format!("{}/{}", path, check)).exists() {
-            return Ok(path);
+            // Rerun when the SDK is replaced, so the libmdk and plugins copied next to the
+            // binary always come from the SDK it is linked against.
+            println!("cargo:rerun-if-changed={}/{}", path, check);
+            return Ok(if path.ends_with('/') || path.ends_with('\\') { path } else { format!("{path}/") });
         }
     }
     let out_dir = env::var("OUT_DIR").unwrap();
