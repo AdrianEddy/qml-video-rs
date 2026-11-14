@@ -63,21 +63,22 @@ fn main() {
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let entry = &sdk[target_os.as_str()];
+    let bin_dir = binary_dir();
 
     if let Ok(path) = download_and_extract(&entry.0, &format!("{}/{}", entry.1, entry.2)) {
         if target_os == "macos" || target_os == "ios" {
             println!("cargo:rustc-link-lib=framework=mdk");
             config.flag_if_supported("-fobjc-arc");
             config.flag("-x").flag("objective-c++");
-            let _ = Command::new("mkdir").args(&[&format!("{}/../../../../Frameworks", env::var("OUT_DIR").unwrap())]).status();
+            let _ = Command::new("mkdir").args(&[&format!("{bin_dir}/../Frameworks")]).status();
             if std::path::Path::new(&format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework")).exists() {
                 println!("cargo:rustc-link-search=framework={path}lib/mdk.xcframework/ios-arm64/");
                 let _ = Command::new("mkdir").args(&["-p", &format!("{}/{}mdk", path, entry.3)]).status();
                 let _ = Command::new("cp").args(&["-af", &format!("{path}lib/mdk.xcframework/ios-arm64/mdk.framework/Headers/"), &format!("{}/{}mdk", path, entry.3)]).status();
-                Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework"), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
+                Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.xcframework/ios-arm64/mdk.framework"), &format!("{bin_dir}/../Frameworks/")]).status().unwrap();
             } else {
                 println!("cargo:rustc-link-search=framework={path}lib/");
-                Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.framework"), &format!("{}/../../../../Frameworks/", env::var("OUT_DIR").unwrap())]).status().unwrap();
+                Command::new("cp").args(&["-af", &format!("{path}/lib/mdk.framework"), &format!("{bin_dir}/../Frameworks/")]).status().unwrap();
             }
         } else {
             println!("cargo:rustc-link-search={}/{}", path, entry.1);
@@ -85,29 +86,29 @@ fn main() {
         }
         if target_os == "windows" {
             println!("cargo:rustc-link-lib=dxguid");
-            std::fs::copy(format!("{}/bin/{arch_win}/mdk.dll", path), format!("{}/../../../mdk.dll", env::var("OUT_DIR").unwrap())).unwrap();
-            let _ = std::fs::copy(format!("{}/bin/{arch_win}/ffmpeg-5.dll", path), format!("{}/../../../ffmpeg-5.dll", env::var("OUT_DIR").unwrap()));
-            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-braw.dll", path), format!("{}/../../../mdk-braw.dll", env::var("OUT_DIR").unwrap()));
-            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-r3d.dll", path), format!("{}/../../../mdk-r3d.dll", env::var("OUT_DIR").unwrap()));
-            copy_or_remove(format!("{}/bin/{arch_win}/mdk-crm.dll", path), format!("{}/../../../mdk-crm.dll", env::var("OUT_DIR").unwrap()));
+            std::fs::copy(format!("{}/bin/{arch_win}/mdk.dll", path), format!("{bin_dir}/mdk.dll")).unwrap();
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/ffmpeg-5.dll", path), format!("{bin_dir}/ffmpeg-5.dll"));
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-braw.dll", path), format!("{bin_dir}/mdk-braw.dll"));
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-r3d.dll", path), format!("{bin_dir}/mdk-r3d.dll"));
+            copy_or_remove(format!("{}/bin/{arch_win}/mdk-crm.dll", path), format!("{bin_dir}/mdk-crm.dll"));
 
-            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk.pdb", path), format!("{}/../../../mdk.pdb", env::var("OUT_DIR").unwrap())).unwrap();
-            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-braw.pdb", path), format!("{}/../../../mdk-braw.pdb", env::var("OUT_DIR").unwrap()));
-            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-r3d.pdb", path), format!("{}/../../../mdk-r3d.pdb", env::var("OUT_DIR").unwrap()));
-            copy_or_remove(format!("{}/bin/{arch_win}/mdk-crm.pdb", path), format!("{}/../../../mdk-crm.pdb", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk.pdb", path), format!("{bin_dir}/mdk.pdb")).unwrap();
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-braw.pdb", path), format!("{bin_dir}/mdk-braw.pdb"));
+            let _ = std::fs::copy(format!("{}/bin/{arch_win}/mdk-r3d.pdb", path), format!("{bin_dir}/mdk-r3d.pdb"));
+            copy_or_remove(format!("{}/bin/{arch_win}/mdk-crm.pdb", path), format!("{bin_dir}/mdk-crm.pdb"));
         }
         if target_os == "android" {
-            std::fs::copy(format!("{}/lib/arm64-v8a/libmdk.so", path), format!("{}/../../../libmdk.so", env::var("OUT_DIR").unwrap())).unwrap();
-            // std::fs::copy(format!("{}/lib/arm64-v8a/libmdk.so.dsym", path), format!("{}/../../../libmdk.so.dsym", env::var("OUT_DIR").unwrap())).unwrap();
-            let _ = std::fs::copy(format!("{}/lib/arm64-v8a/libffmpeg.so", path), format!("{}/../../../libffmpeg.so", env::var("OUT_DIR").unwrap()));
-            // std::fs::copy(format!("{}/lib/arm64-v8a/libqtav-mediacodec.so", path), format!("{}/../../../libqtav-mediacodec.so", env::var("OUT_DIR").unwrap())).unwrap();
+            std::fs::copy(format!("{}/lib/arm64-v8a/libmdk.so", path), format!("{bin_dir}/libmdk.so")).unwrap();
+            // std::fs::copy(format!("{}/lib/arm64-v8a/libmdk.so.dsym", path), format!("{bin_dir}/libmdk.so.dsym")).unwrap();
+            let _ = std::fs::copy(format!("{}/lib/arm64-v8a/libffmpeg.so", path), format!("{bin_dir}/libffmpeg.so"));
+            // std::fs::copy(format!("{}/lib/arm64-v8a/libqtav-mediacodec.so", path), format!("{bin_dir}/libqtav-mediacodec.so")).unwrap();
         }
         if target_os == "linux" {
-            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libffmpeg.so.6", path), format!("{}/../../../libffmpeg.so.6", env::var("OUT_DIR").unwrap()));
-            std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk.so.0", path), format!("{}/../../../libmdk.so.0", env::var("OUT_DIR").unwrap())).unwrap();
-            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-braw.so", path), format!("{}/../../../libmdk-braw.so", env::var("OUT_DIR").unwrap()));
-            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-r3d.so", path), format!("{}/../../../libmdk-r3d.so", env::var("OUT_DIR").unwrap()));
-            copy_or_remove(format!("{}/lib/{arch_lnx}/libmdk-crm.so", path), format!("{}/../../../libmdk-crm.so", env::var("OUT_DIR").unwrap()));
+            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libffmpeg.so.6", path), format!("{bin_dir}/libffmpeg.so.6"));
+            std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk.so.0", path), format!("{bin_dir}/libmdk.so.0")).unwrap();
+            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-braw.so", path), format!("{bin_dir}/libmdk-braw.so"));
+            let _ = std::fs::copy(format!("{}/lib/{arch_lnx}/libmdk-r3d.so", path), format!("{bin_dir}/libmdk-r3d.so"));
+            copy_or_remove(format!("{}/lib/{arch_lnx}/libmdk-crm.so", path), format!("{bin_dir}/libmdk-crm.so"));
         }
         config.include(format!("{}/{}", path, entry.3));
     } else {
@@ -126,6 +127,19 @@ fn main() {
         .include(&qt_include_path)
         .build("src/lib.rs");
 
+}
+
+// The directory the final binaries go to (target/<profile> or target/<triple>/<profile>), where the libraries
+// are copied so the app finds them. It is the parent of OUT_DIR's `build` ancestor; the depth below it differs
+// between cargo versions (build/<pkg>-<hash>/out up to Rust 1.99, build/<pkg>/<hash>/out from Rust 1.100).
+fn binary_dir() -> String {
+    let out_dir = env::var("OUT_DIR").unwrap();
+    Path::new(&out_dir).ancestors()
+        .find(|p| p.ends_with("build"))
+        .and_then(Path::parent)
+        .unwrap_or_else(|| panic!("OUT_DIR {out_dir} is not inside a `build` directory"))
+        .to_string_lossy()
+        .into_owned()
 }
 
 // A plugin is built against one libmdk, so one left over from an earlier SDK must not stay next to a newer libmdk
